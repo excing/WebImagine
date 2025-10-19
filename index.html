@@ -1,0 +1,1205 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>WebImagine — 纯 HTML 单页图像合并与画笔应用（离线可用）</title>
+  <meta name="description" content="WebImagine：无需安装与构建工具的单文件网页应用，支持多图层合并、基础画笔/橡皮擦、撤销重做、导入导出项目、PNG/JPEG 导出，兼容桌面与移动端。">
+  <meta name="theme-color" content="#0f172a">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f172a'/%3E%3Cpath d='M12 44l10-14 8 10 12-18 10 14v8H12z' fill='%23a7f3d0'/%3E%3Ccircle cx='24' cy='20' r='6' fill='%23fbbf24'/%3E%3C/svg%3E">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="WebImagine — 纯 HTML 单页图像合并与画笔应用">
+  <meta property="og:description" content="无需构建与第三方框架，支持多图层、画笔、撤销/重做、项目导入导出、PNG/JPEG。">
+  <meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAADUlEQVR4Ae3BMQEAAADCoPVPbQ0PoAAAAABNy1mKAAABNklEQVR4Xu3aMW7CQBBF0f8Uq3gq0uB3Wc7o2mQHH2b3QJAxLk5oY7c2xQyOZQm2mD7kqg9i+VYzvQ0m3b7cY0l6lFJ0y9x3oY2E/0M3kYgk8j4cZ8+o2hdgUq7v5t0jZ4uT3QZ3v0b0F8o8LxX+0g9G7s9q2N1zqk3o9n3l5n7H6gAk0w8yq+Jt4Y7eQwFh7vQH4v7i0k6g4b9z2ZQm7m8RkXx0b3F3CzGf1tC3wF1q7kGx7u7Gz9n8Fqf3g3a3v9Kf2C6z4k5p9u7n5v3eJ2bop1sR8q1D8lC5E7m4n3t4hQ6F9gO9VbJnxvC9xgJgC5o6VQ8v4rP8bH6n0U3r1J7dF9m8x6oG9b9wHk4v1s2mBqf2cQe0AAAAASUVORK5CYII=">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="WebImagine — 纯 HTML 单页图像合并与画笔应用">
+  <meta name="twitter:description" content="单文件、离线可用、多图层合成 + 画笔/橡皮擦 + 项目导入导出。">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "WebImagine",
+    "applicationCategory": "GraphicsApplication",
+    "operatingSystem": "Web",
+    "description": "无需构建工具的单文件网页应用：多图层图像合并、画笔/橡皮擦、撤销重做、导入导出项目、PNG/JPEG 导出。",
+    "softwareVersion": "1.0.0",
+    "offers": {"@type": "Offer", "price": 0, "priceCurrency": "USD"},
+    "url": "",
+    "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAADUlEQVR4Ae3BMQEAAADCoPVPbQ0PoAAAAABNy1mKAAABNklEQVR4Xu3aMW7CQBBF0f8Uq3gq0uB3Wc7o2mQHH2b3QJAxLk5oY7c2xQyOZQm2mD7kqg9i+VYzvQ0m3b7cY0l6lFJ0y9x3oY2E/0M3kYgk8j4cZ8+o2hdgUq7v5t0jZ4uT3QZ3v0b0F8o8LxX+0g9G7s9q2N1zqk3o9n3l5n7H6gAk0w8yq+Jt4Y7eQwFh7vQH4v7i0k6g4b9z2ZQm7m8RkXx0b3F3CzGf1tC3wF1q7kGx7u7Gz9n8Fqf3g3a3v9Kf2C6z4k5p9u7n5v3eJ2bop1sR8q1D8lC5E7m4n3t4hQ6F9gO9VbJnxvC9xgJgC5o6VQ8v4rP8bH6n0U3r1J7dF9m8x6oG9b9wHk4v1s2mBqf2cQe0"
+  }
+  </script>
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #2563eb;
+      --accent-2: #0ea5e9;
+      --danger: #ef4444;
+      --ok: #16a34a;
+      --focus: #22d3ee;
+      --checker-a: #eee;
+      --checker-b: #ddd;
+    }
+    :root.dark {
+      --bg: #0b1220;
+      --panel: #0f172a;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: #1f2a44;
+      --accent: #60a5fa;
+      --accent-2: #22d3ee;
+      --danger: #f87171;
+      --ok: #34d399;
+      --focus: #38bdf8;
+      --checker-a: #1f2937;
+      --checker-b: #111827;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--text); background: var(--bg);
+    }
+    a { color: inherit; }
+    button, input, select { font: inherit; color: inherit; }
+    button { cursor: pointer; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; }
+    button:hover { background: color-mix(in oklab, var(--panel), var(--accent) 6%); }
+    button[aria-pressed="true"], button.active { outline: 2px solid var(--accent); outline-offset: 0; }
+    button:focus-visible, input:focus-visible, select:focus-visible, [contenteditable]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+    input[type="range"] { width: 100%; }
+    label { display: inline-flex; align-items: center; gap: 6px; }
+
+    header {
+      display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px;
+      background: var(--panel); border-bottom: 1px solid var(--border); padding: 8px 12px; position: sticky; top: 0; z-index: 10;
+    }
+    header .left, header .right { display: flex; align-items: center; gap: 8px; }
+    header h1 { margin: 0; font-size: 16px; font-weight: 700; text-align: center; }
+
+    .app {
+      display: grid; grid-template-columns: 260px 1fr 300px; grid-template-rows: 1fr; gap: 12px; height: calc(100vh - 60px);
+      padding: 12px; max-width: 100vw; overflow: hidden;
+    }
+
+    aside { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; min-height: 0; display: flex; flex-direction: column; }
+    aside h2 { font-size: 14px; margin: 10px 12px; color: var(--muted); }
+
+    #layersPanel { }
+    #layersList { list-style: none; margin: 0; padding: 0 8px 8px; overflow: auto; }
+    .layer-item { display: grid; grid-template-columns: 24px 1fr auto; align-items: center; gap: 6px; padding: 6px; margin: 6px 0; border: 1px solid var(--border); border-radius: 8px; background: color-mix(in oklab, var(--panel), var(--accent) 4%); }
+    .layer-item[aria-selected="true"] { outline: 2px solid var(--accent); outline-offset: 1px; }
+    .layer-name { border: none; background: transparent; padding: 4px 6px; border-radius: 6px; }
+    .layer-name[contenteditable="true"] { border: 1px dashed var(--border); }
+    .layer-actions { display: inline-flex; gap: 4px; }
+    .layer-visibility { width: 18px; height: 18px; }
+
+    #propertiesPanel { }
+    #propContent { padding: 8px 12px; overflow: auto; display: grid; gap: 12px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .form-row label { gap: 4px; font-size: 12px; color: var(--muted); }
+    .hr { height: 1px; background: var(--border); margin: 6px 0; }
+
+    main { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; position: relative; min-width: 0; min-height: 0; }
+    #workspace { position: absolute; inset: 0; display: grid; place-items: center; }
+    #canvasWrap { position: relative; width: 100%; height: 100%; overflow: hidden; }
+    canvas#view { width: 100%; height: 100%; display: block; }
+    .checker {
+      position: absolute; inset: 0; background-image: linear-gradient(45deg, var(--checker-a) 25%, transparent 25%), linear-gradient(-45deg, var(--checker-a) 25%, transparent 25%), linear-gradient(45deg, transparent 75%, var(--checker-a) 75%), linear-gradient(-45deg, transparent 75%, var(--checker-a) 75%);
+      background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      pointer-events: none; opacity: .6;
+    }
+    .drop-hint { position: absolute; inset: 0; display: none; place-items: center; background: color-mix(in oklab, var(--panel), var(--accent) 12%); color: var(--text); font-weight: 600; border: 2px dashed var(--accent); border-radius: 10px; z-index: 5; }
+    .drop-hint.show { display: grid; }
+
+    .toolbar-group { display: inline-flex; gap: 6px; align-items: center; padding: 3px; border: 1px solid var(--border); border-radius: 999px; background: var(--panel); }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    /* Mobile responsive adjustments */
+    @media (max-width: 1100px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: 200px 1fr 240px; height: auto; min-height: calc(100vh - 60px); }
+      #layersPanel { order: 1; height: 200px; }
+      main { order: 2; height: 60vh; }
+      #propertiesPanel { order: 3; height: 240px; }
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div style="padding:12px;background:#fee2e2;color:#7f1d1d;border-bottom:1px solid #fecaca;">
+      本应用需要启用 JavaScript 才能运行；它是一个仅依赖原生 Web API 的单文件图像合并与涂鸦工具。
+    </div>
+  </noscript>
+
+  <header role="banner" aria-label="工具栏">
+    <div class="left" role="toolbar" aria-label="文件与编辑">
+      <label class="toolbar-group" title="导入图片（支持拖拽）">
+        <input id="fileInput" type="file" multiple accept="image/*" aria-label="导入图片" style="display:none" />
+        <button id="btnImport" type="button" aria-label="导入图片">导入图片</button>
+      </label>
+
+      <span class="toolbar-group" aria-label="项目导入导出">
+        <button id="btnExportPNG" type="button" aria-label="导出 PNG">导出 PNG</button>
+        <span aria-hidden="true">/</span>
+        <button id="btnExportJPEG" type="button" aria-label="导出 JPEG">导出 JPEG</button>
+        <button id="btnExportProject" type="button" aria-label="导出项目">导出项目</button>
+        <label>
+          <input id="projectInput" type="file" accept="application/json,.json,.wimproj" aria-label="导入项目" style="display:none" />
+          <button id="btnImportProject" type="button" aria-label="导入项目">导入项目</button>
+        </label>
+      </span>
+
+      <span class="toolbar-group" aria-label="撤销重做">
+        <button id="btnUndo" type="button" aria-label="撤销 (Z)">撤销</button>
+        <button id="btnRedo" type="button" aria-label="重做 (Y/Shift+Z)">重做</button>
+      </span>
+
+      <span class="toolbar-group" aria-label="工具">
+        <button id="toolSelect" type="button" aria-label="选择/移动 (V)" aria-pressed="true">选择</button>
+        <button id="toolBrush" type="button" aria-label="画笔 (B)">画笔</button>
+        <button id="toolEraser" type="button" aria-label="橡皮擦 (E)">橡皮擦</button>
+      </span>
+    </div>
+
+    <h1>WebImagine</h1>
+
+    <div class="right" role="toolbar" aria-label="视图与主题">
+      <span class="toolbar-group" aria-label="缩放">
+        <button id="btnZoomOut" type="button" aria-label="缩小 (-)">-</button>
+        <output id="zoomLabel" style="min-width:60px;text-align:center">100%</output>
+        <button id="btnZoomIn" type="button" aria-label="放大 (+)">+</button>
+      </span>
+      <span class="toolbar-group" aria-label="对齐与吸附">
+        <label><input id="snapToggle" type="checkbox" checked> 吸附</label>
+      </span>
+      <span class="toolbar-group" aria-label="主题">
+        <button id="btnTheme" type="button" aria-label="切换浅/深色">浅/深色</button>
+      </span>
+    </div>
+  </header>
+
+  <div class="app" role="main">
+    <aside id="layersPanel" aria-label="图层面板">
+      <h2>图层</h2>
+      <ul id="layersList" role="listbox" aria-label="图层列表"></ul>
+    </aside>
+
+    <main>
+      <div id="workspace" aria-label="画布区域">
+        <div id="canvasWrap">
+          <div class="checker" aria-hidden="true"></div>
+          <canvas id="view" aria-label="视图画布" role="img"></canvas>
+          <div id="dropHint" class="drop-hint" aria-hidden="true">拖拽图片或项目文件到此处导入</div>
+        </div>
+      </div>
+    </main>
+
+    <aside id="propertiesPanel" aria-label="属性与画笔面板">
+      <h2>属性与画笔</h2>
+      <div id="propContent">
+        <section aria-label="画布设置">
+          <div class="form-row">
+            <label>宽度 <input id="canvasW" type="number" min="64" step="1" value="1920"></label>
+            <label>高度 <input id="canvasH" type="number" min="64" step="1" value="1080"></label>
+          </div>
+          <div class="form-row">
+            <label title="透明背景优先用于 PNG">
+              <input id="bgTransparent" type="checkbox" checked> 背景透明
+            </label>
+            <label>背景色 <input id="bgColor" type="color" value="#ffffff"></label>
+          </div>
+          <div class="form-row">
+            <button id="applyCanvasSize" type="button">应用尺寸</button>
+            <button id="centerView" type="button">视图居中</button>
+          </div>
+        </section>
+        <div class="hr"></div>
+        <section aria-label="所选图层属性">
+          <div class="form-row">
+            <label>X <input id="layerX" type="number" step="1"></label>
+            <label>Y <input id="layerY" type="number" step="1"></label>
+          </div>
+          <div class="form-row">
+            <label>缩放 X <input id="layerScaleX" type="number" step="0.01"></label>
+            <label>缩放 Y <input id="layerScaleY" type="number" step="0.01"></label>
+          </div>
+          <div class="form-row">
+            <button id="btnCenterLayer" type="button">图层居中</button>
+            <button id="btnDelLayer" type="button" class="danger">删除图层</button>
+          </div>
+        </section>
+        <div class="hr"></div>
+        <section aria-label="画笔设置">
+          <div class="form-row">
+            <label>颜色 <input id="brushColor" type="color" value="#ff0000"></label>
+            <label>模式
+              <select id="brushMode" aria-label="画笔模式">
+                <option value="brush">画笔</option>
+                <option value="eraser">橡皮擦</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-row">
+            <label>粗细 <input id="brushSize" type="range" min="1" max="200" value="20"></label>
+            <output id="brushSizeOut">20</output>
+          </div>
+          <div class="form-row">
+            <label>不透明度 <input id="brushOpacity" type="range" min="0" max="1" step="0.01" value="1"></label>
+            <output id="brushOpacityOut">1.00</output>
+          </div>
+          <div class="form-row">
+            <label>硬边 <input id="brushHardness" type="range" min="0" max="1" step="0.01" value="0.8"></label>
+            <output id="brushHardnessOut">0.80</output>
+          </div>
+        </section>
+        <div class="hr"></div>
+        <section aria-label="导出设置">
+          <div class="form-row">
+            <label>JPEG 质量 <input id="jpegQuality" type="range" min="0.3" max="1" step="0.01" value="0.92"></label>
+            <output id="jpegQualityOut">0.92</output>
+          </div>
+          <div class="form-row">
+            <button id="btnMergeExport" type="button">合并导出</button>
+          </div>
+        </section>
+        <div aria-live="polite" class="sr-only" id="ariaLive"></div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+  (function(){
+    'use strict';
+
+    // State
+    const dpr = () => (window.devicePixelRatio || 1);
+    const $ = (sel, root=document) => root.querySelector(sel);
+    const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+    const announce = (msg) => { const el = $('#ariaLive'); if (el) el.textContent = msg; };
+
+    const view = $('#view');
+    const ctx = view.getContext('2d');
+
+    const state = {
+      projectW: 1920,
+      projectH: 1080,
+      background: { type: 'transparent', color: '#ffffff' },
+      layers: [], // bottom -> top
+      selectedId: null,
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      snap: true,
+      theme: (localStorage.getItem('theme') || 'light'),
+      currentTool: 'select', // select|brush|eraser
+      spacePanning: false,
+      brush: { color: '#ff0000', size: 20, opacity: 1, hardness: 0.8, mode: 'brush' },
+      paintCanvas: document.createElement('canvas'),
+      undoStack: [],
+      redoStack: [],
+      maxUndo: 20,
+      isDirty: true,
+      pointerDown: false,
+      activePointers: new Map(),
+      drag: null, // {type: 'move'|'scale'|'pan'|'brush', layerId, startX, startY, ...}
+    };
+
+    // Apply theme
+    if (state.theme === 'dark') document.documentElement.classList.add('dark');
+
+    // Initialize paint canvas
+    function resizePaintCanvas(w, h) {
+      const old = document.createElement('canvas');
+      old.width = state.paintCanvas.width; old.height = state.paintCanvas.height;
+      if (old.width && old.height) {
+        old.getContext('2d').drawImage(state.paintCanvas, 0, 0);
+      }
+      state.paintCanvas.width = w; state.paintCanvas.height = h;
+      const pc = state.paintCanvas.getContext('2d');
+      pc.imageSmoothingEnabled = true;
+      if (old.width && old.height) pc.drawImage(old, 0, 0);
+      markDirty();
+    }
+
+    resizePaintCanvas(state.projectW, state.projectH);
+
+    // View canvas size
+    function resizeViewCanvas() {
+      const rect = view.getBoundingClientRect();
+      const rate = dpr();
+      const w = Math.max(1, Math.floor(rect.width * rate));
+      const h = Math.max(1, Math.floor(rect.height * rate));
+      if (view.width !== w || view.height !== h) {
+        view.width = w; view.height = h;
+        ctx.setTransform(1,0,0,1,0,0);
+        ctx.scale(rate, rate);
+        markDirty();
+      }
+    }
+    window.addEventListener('resize', resizeViewCanvas);
+    resizeViewCanvas();
+
+    // Utilities
+    const uid = () => 'L' + Math.random().toString(36).slice(2, 9);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const within = (v, target, tol) => Math.abs(v - target) <= tol;
+
+    function worldToView(wx, wy) {
+      return { x: wx * state.zoom + state.panX, y: wy * state.zoom + state.panY };
+    }
+    function viewToWorld(vx, vy) {
+      return { x: (vx - state.panX) / state.zoom, y: (vy - state.panY) / state.zoom };
+    }
+
+    function markDirty() { state.isDirty = true; }
+
+    // Layers
+    function addLayerFromSource({ name, width, height, bitmap, srcDataURL }) {
+      const layer = {
+        id: uid(),
+        name: name || `图层 ${state.layers.length + 1}`,
+        visible: true,
+        x: Math.round((state.projectW - width) / 2),
+        y: Math.round((state.projectH - height) / 2),
+        scaleX: 1,
+        scaleY: 1,
+        width, height,
+        bitmap, // ImageBitmap or HTMLImageElement
+        srcDataURL,
+      };
+      state.layers.push(layer);
+      selectLayer(layer.id);
+      rebuildLayersList();
+      announce(`已添加 ${layer.name}`);
+      markDirty();
+    }
+
+    function selectLayer(id) {
+      state.selectedId = id;
+      rebuildLayersListSelection();
+      syncLayerInputs();
+      markDirty();
+    }
+
+    function removeSelectedLayer() {
+      if (!state.selectedId) return;
+      const idx = state.layers.findIndex(l => l.id === state.selectedId);
+      if (idx >= 0) {
+        const [removed] = state.layers.splice(idx, 1);
+        announce(`已删除 ${removed.name}`);
+        state.selectedId = state.layers[idx]?.id || state.layers[idx-1]?.id || null;
+        rebuildLayersList();
+        markDirty();
+      }
+    }
+
+    function moveLayer(id, dir) { // dir: -1 up, +1 down in visual order (top is end)
+      const i = state.layers.findIndex(l => l.id === id);
+      if (i < 0) return;
+      const ni = clamp(i + dir, 0, state.layers.length - 1);
+      if (ni === i) return;
+      const [l] = state.layers.splice(i, 1);
+      state.layers.splice(ni, 0, l);
+      rebuildLayersList();
+      markDirty();
+    }
+
+    function rebuildLayersListSelection() {
+      $$('#layersList .layer-item').forEach(li => li.setAttribute('aria-selected', li.dataset.id === state.selectedId ? 'true' : 'false'));
+    }
+
+    function rebuildLayersList() {
+      const list = $('#layersList');
+      list.innerHTML = '';
+      state.layers.forEach((layer, index) => {
+        const li = document.createElement('li');
+        li.className = 'layer-item';
+        li.dataset.id = layer.id;
+        li.setAttribute('role', 'option');
+        li.setAttribute('aria-selected', layer.id === state.selectedId ? 'true' : 'false');
+        // visibility
+        const vis = document.createElement('input');
+        vis.type = 'checkbox'; vis.className = 'layer-visibility'; vis.checked = layer.visible; vis.title = '可见性'; vis.setAttribute('aria-label', '可见性');
+        vis.addEventListener('change', () => { layer.visible = vis.checked; markDirty(); });
+        // name
+        const name = document.createElement('div');
+        name.className = 'layer-name';
+        name.textContent = layer.name;
+        name.tabIndex = 0;
+        name.title = '双击重命名';
+        name.addEventListener('dblclick', () => {
+          name.setAttribute('contenteditable', 'true'); name.focus();
+          const range = document.createRange(); range.selectNodeContents(name); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+        });
+        name.addEventListener('blur', () => {
+          if (name.hasAttribute('contenteditable')) {
+            name.removeAttribute('contenteditable');
+            layer.name = name.textContent.trim() || layer.name;
+          }
+        });
+        name.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); name.blur(); }});
+        name.addEventListener('click', () => selectLayer(layer.id));
+        // actions
+        const actions = document.createElement('div');
+        actions.className = 'layer-actions';
+        const up = document.createElement('button'); up.textContent = '上移'; up.title = '上移'; up.addEventListener('click', () => moveLayer(layer.id, +1));
+        const down = document.createElement('button'); down.textContent = '下移'; down.title = '下移'; down.addEventListener('click', () => moveLayer(layer.id, -1));
+        const del = document.createElement('button'); del.textContent = '删除'; del.title = '删除'; del.addEventListener('click', () => { selectLayer(layer.id); removeSelectedLayer(); });
+        actions.append(up, down, del);
+
+        li.append(vis, name, actions);
+        li.addEventListener('click', (e) => { if (e.target === vis || name.contains(e.target) || actions.contains(e.target)) return; selectLayer(layer.id); });
+        list.prepend(li); // Show topmost first visually
+      });
+      rebuildLayersListSelection();
+    }
+
+    // Inputs and toolbar
+    const fileInput = $('#fileInput');
+    $('#btnImport').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      await loadFiles(files);
+      fileInput.value = '';
+    });
+
+    const projectInput = $('#projectInput');
+    $('#btnImportProject').addEventListener('click', () => projectInput.click());
+    projectInput.addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      await importProjectFromFiles(files);
+      projectInput.value = '';
+    });
+
+    $('#btnExportPNG').addEventListener('click', () => exportMerged('image/png'));
+    $('#btnExportJPEG').addEventListener('click', () => exportMerged('image/jpeg'));
+    $('#btnExportProject').addEventListener('click', () => exportProject());
+
+    $('#btnUndo').addEventListener('click', () => undo());
+    $('#btnRedo').addEventListener('click', () => redo());
+
+    function activateTool(tool) {
+      state.currentTool = tool;
+      $('#toolSelect').setAttribute('aria-pressed', tool === 'select' ? 'true':'false');
+      $('#toolBrush').setAttribute('aria-pressed', tool === 'brush' ? 'true':'false');
+      $('#toolEraser').setAttribute('aria-pressed', tool === 'eraser' ? 'true':'false');
+      $('#brushMode').value = (tool === 'eraser' ? 'eraser' : 'brush');
+      announce('工具：' + (tool==='select'?'选择':tool==='brush'?'画笔':'橡皮擦'));
+    }
+    $('#toolSelect').addEventListener('click', () => activateTool('select'));
+    $('#toolBrush').addEventListener('click', () => activateTool('brush'));
+    $('#toolEraser').addEventListener('click', () => activateTool('eraser'));
+
+    $('#btnZoomIn').addEventListener('click', () => setZoom(state.zoom * 1.1));
+    $('#btnZoomOut').addEventListener('click', () => setZoom(state.zoom / 1.1));
+
+    $('#snapToggle').addEventListener('change', (e)=> { state.snap = e.target.checked; markDirty(); });
+
+    $('#btnTheme').addEventListener('click', () => { document.documentElement.classList.toggle('dark'); state.theme = document.documentElement.classList.contains('dark')?'dark':'light'; localStorage.setItem('theme', state.theme); });
+
+    // Properties panel sync
+    function syncCanvasInputs() {
+      $('#canvasW').value = state.projectW;
+      $('#canvasH').value = state.projectH;
+      $('#bgTransparent').checked = (state.background.type === 'transparent');
+      $('#bgColor').value = state.background.color;
+    }
+    syncCanvasInputs();
+
+    $('#applyCanvasSize').addEventListener('click', () => {
+      const w = Math.max(16, Math.floor(parseInt($('#canvasW').value||state.projectW)));
+      const h = Math.max(16, Math.floor(parseInt($('#canvasH').value||state.projectH)));
+      state.projectW = w; state.projectH = h;
+      resizePaintCanvas(w, h);
+      markDirty();
+    });
+    $('#bgTransparent').addEventListener('change', (e)=>{ state.background.type = e.target.checked ? 'transparent' : 'color'; markDirty(); });
+    $('#bgColor').addEventListener('change', (e)=>{ state.background.color = e.target.value; markDirty(); });
+    $('#centerView').addEventListener('click', centerView);
+
+    function syncLayerInputs() {
+      const l = state.layers.find(l => l.id === state.selectedId);
+      $('#layerX').value = l ? Math.round(l.x) : '';
+      $('#layerY').value = l ? Math.round(l.y) : '';
+      $('#layerScaleX').value = l ? +l.scaleX.toFixed(2) : '';
+      $('#layerScaleY').value = l ? +l.scaleY.toFixed(2) : '';
+    }
+
+    $('#layerX').addEventListener('change', (e)=>{ const l = getSelected(); if (!l) return; l.x = parseFloat(e.target.value)||0; markDirty(); });
+    $('#layerY').addEventListener('change', (e)=>{ const l = getSelected(); if (!l) return; l.y = parseFloat(e.target.value)||0; markDirty(); });
+    $('#layerScaleX').addEventListener('change', (e)=>{ const l = getSelected(); if (!l) return; l.scaleX = parseFloat(e.target.value)||1; markDirty(); });
+    $('#layerScaleY').addEventListener('change', (e)=>{ const l = getSelected(); if (!l) return; l.scaleY = parseFloat(e.target.value)||1; markDirty(); });
+    $('#btnDelLayer').addEventListener('click', removeSelectedLayer);
+    $('#btnCenterLayer').addEventListener('click', ()=>{ const l=getSelected(); if(!l) return; l.x = Math.round((state.projectW - l.width*l.scaleX)/2); l.y = Math.round((state.projectH - l.height*l.scaleY)/2); syncLayerInputs(); markDirty(); });
+
+    // Brush inputs
+    $('#brushColor').addEventListener('input', (e)=>{ state.brush.color = e.target.value; });
+    $('#brushMode').addEventListener('change', (e)=>{ state.brush.mode = e.target.value; activateTool(state.brush.mode==='eraser'?'eraser':'brush'); });
+    const sizeInput = $('#brushSize'); const sizeOut = $('#brushSizeOut');
+    const opInput = $('#brushOpacity'); const opOut = $('#brushOpacityOut');
+    const hardInput = $('#brushHardness'); const hardOut = $('#brushHardnessOut');
+    function syncBrushOutputs(){ sizeOut.textContent = sizeInput.value; opOut.textContent = (+opInput.value).toFixed(2); hardOut.textContent = (+hardInput.value).toFixed(2); }
+    sizeInput.addEventListener('input', (e)=>{ state.brush.size = parseFloat(e.target.value); syncBrushOutputs(); });
+    opInput.addEventListener('input', (e)=>{ state.brush.opacity = parseFloat(e.target.value); syncBrushOutputs(); });
+    hardInput.addEventListener('input', (e)=>{ state.brush.hardness = parseFloat(e.target.value); syncBrushOutputs(); });
+    syncBrushOutputs();
+
+    // Export
+    const jpegQ = $('#jpegQuality'); const jpegQOut = $('#jpegQualityOut');
+    jpegQ.addEventListener('input', ()=>{ jpegQOut.textContent = (+jpegQ.value).toFixed(2); });
+    $('#btnMergeExport').addEventListener('click', ()=>{
+      // Default PNG export
+      exportMerged('image/png');
+    });
+
+    // View helpers
+    function centerView() {
+      // Center project in view
+      const rect = view.getBoundingClientRect();
+      const scaleX = rect.width / state.projectW;
+      const scaleY = rect.height / state.projectH;
+      const fit = Math.min(scaleX, scaleY) * 0.9; // leave border
+      setZoom(fit || 1);
+      state.panX = (rect.width - state.projectW * state.zoom) / 2;
+      state.panY = (rect.height - state.projectH * state.zoom) / 2;
+      updateZoomLabel();
+      markDirty();
+    }
+
+    function updateZoomLabel() { $('#zoomLabel').textContent = Math.round(state.zoom*100) + '%'; }
+    updateZoomLabel();
+
+    function setZoom(newZoom, anchorVX, anchorVY) {
+      const rect = view.getBoundingClientRect();
+      const minZoom = Math.min(0.05, Math.min(rect.width/state.projectW, rect.height/state.projectH));
+      const maxZoom = 8;
+      newZoom = clamp(newZoom, minZoom, maxZoom);
+      if (anchorVX === undefined || anchorVY === undefined) {
+        anchorVX = rect.width/2; anchorVY = rect.height/2;
+      }
+      const before = viewToWorld(anchorVX, anchorVY);
+      state.zoom = newZoom;
+      const after = viewToWorld(anchorVX, anchorVY);
+      state.panX += (after.x - before.x) * state.zoom;
+      state.panY += (after.y - before.y) * state.zoom;
+      updateZoomLabel();
+      markDirty();
+    }
+
+    // Drag & Drop
+    const dropHint = $('#dropHint');
+    const canvasWrap = $('#canvasWrap');
+    ;['dragenter','dragover'].forEach(ev => canvasWrap.addEventListener(ev, (e)=>{ e.preventDefault(); dropHint.classList.add('show'); }));
+    ;['dragleave','drop'].forEach(ev => canvasWrap.addEventListener(ev, (e)=>{ if (ev==='drop') return; e.preventDefault(); dropHint.classList.remove('show'); }));
+    canvasWrap.addEventListener('drop', async (e)=>{
+      e.preventDefault(); dropHint.classList.remove('show');
+      const files = Array.from(e.dataTransfer.files || []);
+      if (files.length) {
+        const hasProject = files.some(f => f.type === 'application/json' || /\.wimproj$/i.test(f.name));
+        if (hasProject) { await importProjectFromFiles(files); } else { await loadFiles(files); }
+      }
+    });
+
+    async function importProjectFromFiles(files) {
+      for (const f of files) {
+        if (f.type === 'application/json' || /\.json$|\.wimproj$/i.test(f.name)) {
+          try {
+            const text = await f.text();
+            const data = JSON.parse(text);
+            await loadProject(data);
+            announce('项目已导入');
+            return;
+          } catch (err) { alert('项目文件解析失败: ' + err.message); }
+        }
+      }
+      alert('未找到有效的项目文件');
+    }
+
+    async function loadFiles(files) {
+      for (const f of files) {
+        if (!f.type.startsWith('image/')) continue;
+        try {
+          const blob = f;
+          const srcDataURL = await blobToDataURL(blob);
+          const bitmap = await decodeImage(blob);
+          const pixels = bitmap.width * bitmap.height;
+          const risk = 50_000_000; // ~50MP
+          if (pixels > risk) {
+            const ok = confirm(`警告：图片像素 ${bitmap.width}×${bitmap.height} 过大，可能导致内存占用过高。继续导入吗？`);
+            if (!ok) continue;
+          }
+          addLayerFromSource({ name: f.name.replace(/\.[^.]+$/, ''), width: bitmap.width, height: bitmap.height, bitmap, srcDataURL });
+        } catch (e) {
+          console.error(e);
+          alert('导入失败: ' + e.message);
+        }
+      }
+    }
+
+    async function blobToDataURL(blob) {
+      return new Promise((resolve, reject)=>{
+        const fr = new FileReader();
+        fr.onerror = reject;
+        fr.onload = () => resolve(fr.result);
+        fr.readAsDataURL(blob);
+      });
+    }
+
+    async function decodeImage(blobOrDataURL) {
+      try {
+        if (window.createImageBitmap && blobOrDataURL instanceof Blob) {
+          return await createImageBitmap(blobOrDataURL);
+        }
+      } catch(_){}
+      // fallback
+      return new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.onload = ()=>{
+          // draw to bitmap canvas for unified interface
+          try {
+            if (window.createImageBitmap) {
+              createImageBitmap(img).then(resolve).catch(()=>resolve(img));
+            } else {
+              resolve(img);
+            }
+          } catch { resolve(img); }
+        };
+        img.onerror = reject;
+        img.src = blobOrDataURL instanceof Blob ? URL.createObjectURL(blobOrDataURL) : blobOrDataURL;
+      });
+    }
+
+    // Pointer & keyboard handling
+    view.addEventListener('pointerdown', onPointerDown);
+    view.addEventListener('pointermove', onPointerMove);
+    view.addEventListener('pointerup', onPointerUp);
+    view.addEventListener('pointercancel', onPointerUp);
+    view.addEventListener('wheel', onWheel, { passive: false });
+
+    document.addEventListener('keydown', (e)=>{
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      const isTyping = activeTag === 'input' || activeTag === 'textarea' || document.activeElement?.hasAttribute('contenteditable');
+      if (isTyping && (e.key !== 'Escape')) return;
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); exportMerged('image/png'); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') { e.preventDefault(); projectInput.click(); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+      if (((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey)))) { e.preventDefault(); redo(); }
+      if (e.key === 'Delete') { removeSelectedLayer(); }
+      if (e.key.toLowerCase() === 'b') { activateTool('brush'); }
+      if (e.key.toLowerCase() === 'e') { activateTool('eraser'); }
+      if (e.key.toLowerCase() === 'v') { activateTool('select'); }
+      if (e.key === '+') { setZoom(state.zoom * 1.1); }
+      if (e.key === '-') { setZoom(state.zoom / 1.1); }
+      if (e.key === ' ') { state.spacePanning = true; document.body.style.cursor = 'grab'; }
+      if (e.key === 'Escape') { state.drag = null; document.body.style.cursor = 'default'; }
+      markDirty();
+    });
+    document.addEventListener('keyup', (e)=>{ if (e.key === ' ') { state.spacePanning = false; document.body.style.cursor = 'default'; } });
+
+    function onWheel(e) {
+      const ctrl = e.ctrlKey || e.metaKey;
+      if (ctrl) { e.preventDefault(); setZoom(state.zoom * (e.deltaY < 0 ? 1.1 : 1/1.1), e.clientX, e.clientY); return; }
+      // Otherwise scroll -> pan vertically
+      const speed = 1;
+      state.panX -= e.deltaX * speed; state.panY -= e.deltaY * speed; markDirty();
+    }
+
+    function getSelected() { return state.layers.find(l => l.id === state.selectedId) || null; }
+
+    function pickLayerAt(wx, wy) {
+      for (let i = state.layers.length - 1; i >= 0; i--) {
+        const l = state.layers[i];
+        if (!l.visible) continue;
+        const w = l.width * l.scaleX;
+        const h = l.height * l.scaleY;
+        if (wx >= l.x && wy >= l.y && wx <= l.x + w && wy <= l.y + h) return l;
+      }
+      return null;
+    }
+
+    // Handle detection for scaling
+    function getHandleAt(l, vx, vy) {
+      const handles = computeHandles(l); // array of {name, vx, vy}
+      for (const h of handles) {
+        if (Math.hypot(vx - h.vx, vy - h.vy) <= 8) return h.name;
+      }
+      return null;
+    }
+
+    function computeHandles(l) {
+      const pts = [];
+      const w = l.width * l.scaleX;
+      const h = l.height * l.scaleY;
+      const corners = [
+        {name:'nw', x:l.x, y:l.y},
+        {name:'ne', x:l.x+w, y:l.y},
+        {name:'sw', x:l.x, y:l.y+h},
+        {name:'se', x:l.x+w, y:l.y+h},
+      ];
+      for (const c of corners) {
+        const v = worldToView(c.x, c.y); pts.push({ name: c.name, vx: v.x, vy: v.y });
+      }
+      return pts;
+    }
+
+    function onPointerDown(e) {
+      view.setPointerCapture(e.pointerId);
+      state.pointerDown = true;
+      state.activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+      const v = { x: e.clientX, y: e.clientY };
+      const w = viewToWorld(v.x, v.y);
+
+      if ((state.spacePanning) || state.activePointers.size >= 2) {
+        state.drag = { type: 'pan', startVX: v.x, startVY: v.y, startPanX: state.panX, startPanY: state.panY };
+        document.body.style.cursor = 'grabbing';
+        return;
+      }
+
+      if (state.currentTool === 'brush' || state.currentTool === 'eraser') {
+        startStroke(w.x, w.y, e.pressure || 0.5);
+        state.drag = { type: 'brush', lastX: w.x, lastY: w.y };
+        return;
+      }
+
+      if (state.currentTool === 'select') {
+        const sel = getSelected();
+        let target = sel && hitLayer(sel, w.x, w.y) ? sel : pickLayerAt(w.x, w.y);
+        if (target) {
+          selectLayer(target.id);
+          const handle = getHandleAt(target, v.x, v.y);
+          if (handle) {
+            state.drag = { type: 'scale', layerId: target.id, handle, startWX: w.x, startWY: w.y, start: { x: target.x, y: target.y, scaleX: target.scaleX, scaleY: target.scaleY, w: target.width*target.scaleX, h: target.height*target.scaleY } };
+          } else {
+            state.drag = { type: 'move', layerId: target.id, offsetX: w.x - target.x, offsetY: w.y - target.y };
+          }
+        } else {
+          selectLayer(null);
+        }
+      }
+    }
+
+    function hitLayer(l, wx, wy) {
+      const w = l.width * l.scaleX; const h = l.height * l.scaleY;
+      return (wx >= l.x && wy >= l.y && wx <= l.x+w && wy <= l.y+h);
+    }
+
+    function onPointerMove(e) {
+      const v = { x: e.clientX, y: e.clientY };
+      const w = viewToWorld(v.x, v.y);
+
+      if (state.activePointers.size === 2) {
+        const pts = Array.from(state.activePointers.values());
+        const oldDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+        state.activePointers.set(e.pointerId, { x:e.clientX, y:e.clientY });
+        const pts2 = Array.from(state.activePointers.values());
+        const newDist = Math.hypot(pts2[0].x - pts2[1].x, pts2[0].y - pts2[1].y);
+        const anchor = { x: (pts2[0].x + pts2[1].x)/2, y: (pts2[0].y + pts2[1].y)/2 };
+        if (oldDist > 0) setZoom(state.zoom * (newDist/oldDist), anchor.x, anchor.y);
+        // Pan with two fingers
+        const oldCenter = { x: (pts[0].x + pts[1].x)/2, y: (pts[0].y + pts[1].y)/2 };
+        const newCenter = anchor;
+        state.panX += (newCenter.x - oldCenter.x);
+        state.panY += (newCenter.y - oldCenter.y);
+        markDirty();
+        return;
+      } else if (state.activePointers.size === 1) {
+        state.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      if (!state.pointerDown) return;
+      const drag = state.drag;
+      if (!drag) return;
+
+      if (drag.type === 'pan') {
+        state.panX = drag.startPanX + (v.x - drag.startVX);
+        state.panY = drag.startPanY + (v.y - drag.startVY);
+        markDirty();
+        return;
+      }
+
+      if (drag.type === 'brush') {
+        continueStroke(w.x, w.y, e.pressure || 0.5);
+        return;
+      }
+
+      if (drag.type === 'move') {
+        const l = state.layers.find(l => l.id === drag.layerId);
+        const nx = w.x - drag.offsetX;
+        const ny = w.y - drag.offsetY;
+        const snapTol = 6 / state.zoom; // 6 view px
+        let rx = nx, ry = ny;
+        if (state.snap) {
+          const lw = l.width*l.scaleX, lh = l.height*l.scaleY;
+          // Snap to canvas edges
+          if (within(nx, 0, snapTol)) rx = 0;
+          if (within(nx+lw, state.projectW, snapTol)) rx = state.projectW - lw;
+          if (within(ny, 0, snapTol)) ry = 0;
+          if (within(ny+lh, state.projectH, snapTol)) ry = state.projectH - lh;
+          // Snap to center lines
+          if (within(nx + lw/2, state.projectW/2, snapTol)) rx = Math.round(state.projectW/2 - lw/2);
+          if (within(ny + lh/2, state.projectH/2, snapTol)) ry = Math.round(state.projectH/2 - lh/2);
+        }
+        l.x = Math.round(rx); l.y = Math.round(ry);
+        syncLayerInputs();
+        markDirty();
+        return;
+      }
+
+      if (drag.type === 'scale') {
+        const l = state.layers.find(l => l.id === drag.layerId);
+        const start = drag.start;
+        // Determine scale based on handle movement
+        const anchor = {
+          x: (drag.handle.includes('e')? l.x : l.x + start.w),
+          y: (drag.handle.includes('s')? l.y : l.y + start.h)
+        };
+        let nx = l.x, ny = l.y, nscaleX = l.scaleX, nscaleY = l.scaleY;
+
+        // Compute new width/height based on pointer
+        const wx = w.x, wy = w.y;
+        let newW = start.w, newH = start.h;
+        if (drag.handle === 'se') { newW = wx - l.x; newH = wy - l.y; }
+        if (drag.handle === 'ne') { newW = wx - l.x; newH = start.h - (wy - l.y); ny = wy; }
+        if (drag.handle === 'sw') { newW = start.w - (wx - l.x); newH = wy - l.y; nx = wx; }
+        if (drag.handle === 'nw') { newW = start.w - (wx - l.x); newH = start.h - (wy - l.y); nx = wx; ny = wy; }
+
+        newW = Math.max(1, newW); newH = Math.max(1, newH);
+
+        const keepRatio = e.shiftKey; // Shift 约束比例
+        const aspect = (start.w / start.h) || 1;
+        if (keepRatio) {
+          if (drag.handle === 'ne' || drag.handle === 'sw') {
+            // choose based on larger change
+            if (Math.abs(newW) > Math.abs(newH*aspect)) newH = newW / aspect; else newW = newH * aspect;
+          } else {
+            if (Math.abs(newW) > Math.abs(newH*aspect)) newW = newH * aspect; else newH = newW / aspect;
+          }
+          if (drag.handle.includes('w')) nx = (anchor.x - newW);
+          if (drag.handle.includes('n')) ny = (anchor.y - newH);
+        }
+
+        nscaleX = newW / l.width;
+        nscaleY = newH / l.height;
+
+        // Snap edges while scaling if enabled
+        if (state.snap) {
+          const tol = 6 / state.zoom;
+          // left, right, center X
+          const edgesX = [0, state.projectW, state.projectW/2];
+          const lft = nx, rgt = nx + newW, cx = nx + newW/2;
+          for (const ex of edgesX) {
+            if (within(lft, ex, tol)) { const delta = ex - lft; nx += delta; }
+            if (within(rgt, ex, tol)) { const delta = ex - rgt; nx += delta; }
+            if (within(cx, ex, tol)) { const delta = ex - cx; nx += delta; }
+          }
+          // top, bottom, center Y
+          const edgesY = [0, state.projectH, state.projectH/2];
+          const top = ny, btm = ny + newH, cy = ny + newH/2;
+          for (const ey of edgesY) {
+            if (within(top, ey, tol)) { const d = ey - top; ny += d; }
+            if (within(btm, ey, tol)) { const d = ey - btm; ny += d; }
+            if (within(cy, ey, tol)) { const d = ey - cy; ny += d; }
+          }
+        }
+
+        l.x = Math.round(nx); l.y = Math.round(ny); l.scaleX = newW / l.width; l.scaleY = newH / l.height;
+        syncLayerInputs();
+        markDirty();
+        return;
+      }
+    }
+
+    function onPointerUp(e) {
+      try { view.releasePointerCapture(e.pointerId); } catch {}
+      state.pointerDown = false;
+      state.activePointers.delete(e.pointerId);
+      if (state.drag && state.drag.type === 'brush') finalizeStroke();
+      state.drag = null;
+      document.body.style.cursor = state.spacePanning ? 'grab' : 'default';
+    }
+
+    // Brush implementation
+    function startStroke(wx, wy, pressure) {
+      pushUndo();
+      paintDot(wx, wy, pressure);
+      state.drag = { type: 'brush', lastX: wx, lastY: wy, accDist: 0 };
+    }
+
+    function continueStroke(wx, wy, pressure) {
+      const last = state.drag;
+      const dist = Math.hypot(wx - last.lastX, wy - last.lastY);
+      const spacing = Math.max(1, state.brush.size * 0.15);
+      const steps = Math.floor((last.accDist + dist) / spacing);
+      const dirX = (wx - last.lastX) / (dist || 1);
+      const dirY = (wy - last.lastY) / (dist || 1);
+      let px = last.lastX, py = last.lastY, remain = last.accDist + dist;
+      for (let i=0; i<steps; i++) {
+        px += dirX * spacing; py += dirY * spacing; paintDot(px, py, pressure);
+        remain -= spacing;
+      }
+      state.drag.lastX = wx; state.drag.lastY = wy; state.drag.accDist = remain;
+    }
+
+    function finalizeStroke() {
+      // nothing special; undo already pushed at start
+    }
+
+    function paintDot(wx, wy, pressure=0.5) {
+      const pc = state.paintCanvas.getContext('2d');
+      const size = Math.max(1, state.brush.size * (pressure || 1));
+      const radius = size/2;
+      const hard = clamp(state.brush.hardness, 0, 1);
+      const mode = state.currentTool === 'eraser' || state.brush.mode === 'eraser' ? 'destination-out' : 'source-over';
+      pc.save();
+      pc.globalCompositeOperation = mode;
+      pc.globalAlpha = clamp(state.brush.opacity, 0, 1);
+
+      // Soft brush via radial gradient
+      const g = pc.createRadialGradient(wx, wy, radius*hard, wx, wy, radius);
+      if (mode === 'destination-out') { // Eraser as soft edge
+        g.addColorStop(0, 'rgba(0,0,0,1)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        pc.fillStyle = g;
+      } else {
+        const rgb = hexToRgb(state.brush.color);
+        g.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},1)`);
+        g.addColorStop(1, `rgba(${rgb.r},${rgb.g},${rgb.b},0)`);
+        pc.fillStyle = g;
+      }
+      pc.beginPath(); pc.arc(wx, wy, radius, 0, Math.PI*2); pc.closePath(); pc.fill();
+      pc.restore();
+      markDirty();
+    }
+
+    function hexToRgb(hex) {
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+      if (!m) return { r: 255, g: 0, b: 0 };
+      return { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) };
+    }
+
+    // Undo/Redo for paint layer
+    function pushUndo() {
+      const pc = state.paintCanvas;
+      try {
+        const data = pc.getContext('2d').getImageData(0,0,pc.width,pc.height);
+        state.undoStack.push(data);
+        if (state.undoStack.length > state.maxUndo) state.undoStack.shift();
+        state.redoStack.length = 0;
+      } catch (e) { console.warn('无法创建撤销快照', e); }
+    }
+    function undo() {
+      if (state.undoStack.length === 0) return;
+      const pc = state.paintCanvas; const ctxp = pc.getContext('2d');
+      const cur = ctxp.getImageData(0,0,pc.width,pc.height);
+      const prev = state.undoStack.pop();
+      state.redoStack.push(cur);
+      ctxp.putImageData(prev, 0, 0);
+      markDirty();
+    }
+    function redo() {
+      if (state.redoStack.length === 0) return;
+      const pc = state.paintCanvas; const ctxp = pc.getContext('2d');
+      const cur = ctxp.getImageData(0,0,pc.width,pc.height);
+      const next = state.redoStack.pop();
+      state.undoStack.push(cur);
+      ctxp.putImageData(next, 0, 0);
+      markDirty();
+    }
+
+    // Export merged image
+    async function exportMerged(mime='image/png') {
+      const exp = document.createElement('canvas');
+      exp.width = state.projectW; exp.height = state.projectH;
+      const ec = exp.getContext('2d');
+      if (state.background.type === 'color' || mime === 'image/jpeg') {
+        ec.fillStyle = state.background.color || '#ffffff';
+        ec.fillRect(0,0,exp.width,exp.height);
+      }
+      // draw layers
+      for (const l of state.layers) {
+        if (!l.visible) continue;
+        const w = l.width * l.scaleX; const h = l.height * l.scaleY;
+        ec.drawImage(l.bitmap, l.x, l.y, w, h);
+      }
+      // paint layer
+      ec.drawImage(state.paintCanvas, 0, 0);
+
+      const quality = mime === 'image/jpeg' ? parseFloat($('#jpegQuality').value || '0.92') : undefined;
+      exp.toBlob((blob)=>{
+        if (!blob) return alert('导出失败');
+        const a = document.createElement('a');
+        const ts = new Date().toISOString().replace(/[:T]/g,'-').slice(0,19);
+        const ext = mime === 'image/jpeg' ? 'jpg' : 'png';
+        a.download = `webimagine-${ts}.${ext}`;
+        a.href = URL.createObjectURL(blob);
+        a.click();
+        URL.revokeObjectURL(a.href);
+      }, mime, quality);
+      announce('导出完成');
+    }
+
+    function exportProject() {
+      const layers = state.layers.map(l => ({
+        id: l.id,
+        name: l.name,
+        visible: l.visible,
+        x: l.x, y: l.y,
+        scaleX: l.scaleX, scaleY: l.scaleY,
+        width: l.width, height: l.height,
+        srcDataURL: l.srcDataURL
+      }));
+      const paintDataURL = state.paintCanvas.toDataURL('image/png');
+      const data = {
+        version: 1,
+        project: { width: state.projectW, height: state.projectH, background: state.background },
+        layers,
+        paintDataURL,
+        view: { zoom: state.zoom, panX: state.panX, panY: state.panY },
+        theme: state.theme,
+        brush: state.brush,
+      };
+      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+      const a = document.createElement('a');
+      const ts = new Date().toISOString().replace(/[:T]/g,'-').slice(0,19);
+      a.download = `webimagine-${ts}.wimproj`;
+      a.href = URL.createObjectURL(blob);
+      a.click();
+      URL.revokeObjectURL(a.href);
+      announce('项目已导出');
+    }
+
+    async function loadProject(data) {
+      state.layers = [];
+      state.selectedId = null;
+      state.projectW = data.project?.width || 1920;
+      state.projectH = data.project?.height || 1080;
+      state.background = data.project?.background || { type:'transparent', color:'#ffffff' };
+      resizePaintCanvas(state.projectW, state.projectH);
+      if (data.paintDataURL) {
+        const img = await decodeImage(dataURLToBlob(data.paintDataURL));
+        const pc = state.paintCanvas.getContext('2d');
+        pc.clearRect(0,0,state.projectW,state.projectH);
+        pc.drawImage(img, 0, 0);
+      }
+      for (const l of (data.layers||[])) {
+        try {
+          const bitmap = await decodeImage(dataURLToBlob(l.srcDataURL));
+          state.layers.push({
+            id: l.id || uid(), name: l.name || '图层', visible: !!l.visible,
+            x: l.x||0, y: l.y||0, scaleX: l.scaleX||1, scaleY: l.scaleY||1,
+            width: l.width || bitmap.width, height: l.height || bitmap.height,
+            bitmap, srcDataURL: l.srcDataURL
+          });
+        } catch (e) {
+          console.warn('图层加载失败', e);
+        }
+      }
+      // Restore view
+      if (data.view) { state.zoom = data.view.zoom || state.zoom; state.panX = data.view.panX||0; state.panY = data.view.panY||0; updateZoomLabel(); }
+      if (data.theme) { state.theme = data.theme; document.documentElement.classList.toggle('dark', state.theme==='dark'); }
+      if (data.brush) { Object.assign(state.brush, data.brush); $('#brushColor').value = state.brush.color; $('#brushSize').value = state.brush.size; $('#brushOpacity').value = state.brush.opacity; $('#brushHardness').value = state.brush.hardness; }
+      syncBrushOutputs();
+      syncCanvasInputs();
+      rebuildLayersList();
+      markDirty();
+    }
+
+    function dataURLToBlob(dataURL) {
+      const parts = dataURL.split(',');
+      const mime = parts[0].match(/:(.*?);/)[1];
+      const bin = atob(parts[1]);
+      const len = bin.length; const arr = new Uint8Array(len);
+      for (let i=0;i<len;i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    }
+
+    // Rendering loop
+    function render() {
+      if (state.isDirty) {
+        draw(); state.isDirty = false;
+      }
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+
+    function draw() {
+      resizeViewCanvas();
+      const rect = view.getBoundingClientRect();
+      ctx.save();
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.clearRect(0,0,rect.width,rect.height);
+
+      // Project area background (checker is DOM below)
+      // Draw project frame border
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border');
+      ctx.lineWidth = 1;
+      const tl = worldToView(0,0); const br = worldToView(state.projectW, state.projectH);
+      ctx.strokeRect(tl.x+0.5, tl.y+0.5, (br.x - tl.x), (br.y - tl.y));
+
+      // Center guide lines (if snapping)
+      if (state.snap) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.5)';
+        ctx.setLineDash([4,4]);
+        const c1 = worldToView(state.projectW/2, 0);
+        const c2 = worldToView(state.projectW/2, state.projectH);
+        const c3 = worldToView(0, state.projectH/2);
+        const c4 = worldToView(state.projectW, state.projectH/2);
+        ctx.beginPath();
+        ctx.moveTo(c1.x, c1.y); ctx.lineTo(c2.x, c2.y);
+        ctx.moveTo(c3.x, c3.y); ctx.lineTo(c4.x, c4.y);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Content
+      ctx.save();
+      ctx.setTransform(state.zoom, 0, 0, state.zoom, state.panX, state.panY);
+
+      // Background color if not transparent (for preview convenience only within project rect)
+      if (state.background.type === 'color') {
+        ctx.fillStyle = state.background.color; ctx.fillRect(0,0,state.projectW,state.projectH);
+      }
+
+      // draw layers in order
+      for (const l of state.layers) {
+        if (!l.visible) continue;
+        const w = l.width * l.scaleX; const h = l.height * l.scaleY;
+        try { ctx.drawImage(l.bitmap, l.x, l.y, w, h); } catch {}
+      }
+      // draw paint layer
+      ctx.drawImage(state.paintCanvas, 0, 0);
+
+      // selection
+      const sel = getSelected();
+      if (sel) {
+        const w = sel.width * sel.scaleX; const h = sel.height * sel.scaleY;
+        ctx.save();
+        ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 1/state.zoom; ctx.setLineDash([6/state.zoom, 4/state.zoom]);
+        ctx.strokeRect(sel.x+0.5/state.zoom, sel.y+0.5/state.zoom, w, h);
+        // handles
+        const hs = computeHandles(sel);
+        ctx.fillStyle = '#22d3ee';
+        for (const hpos of hs) {
+          const p = { x: (hpos.vx - state.panX)/state.zoom, y: (hpos.vy - state.panY)/state.zoom };
+          ctx.beginPath(); ctx.arc(p.x, p.y, 4/state.zoom, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      ctx.restore();
+      ctx.restore();
+    }
+
+    // Initial center view
+    centerView();
+
+  })();
+  </script>
+</body>
+</html>

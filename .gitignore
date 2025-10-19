@@ -1,0 +1,25 @@
+# General
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.swp
+
+# Node/JS common (not used but safe)
+node_modules/
+dist/
+build/
+.cache/
+coverage/
+
+# OS
+.DS_Store
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Icon?
+
+# Editor
+.vscode/
+.idea/
+*.code-workspace
