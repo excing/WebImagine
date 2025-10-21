@@ -143,6 +143,10 @@
         <button id="btnImport" type="button" aria-label="导入图片">导入图片</button>
       </label>
 
+      <span class="toolbar-group" aria-label="排列">
+        <button id="btnAutoArrange" type="button" aria-label="自动排列图片到网格">自动排列</button>
+      </span>
+
       <span class="toolbar-group" aria-label="项目导入导出">
         <button id="btnExportPNG" type="button" aria-label="导出 PNG">导出 PNG</button>
         <span aria-hidden="true">/</span>
@@ -377,6 +381,7 @@
       rebuildLayersList();
       announce(`已添加 ${layer.name}`);
       markDirty();
+      return layer;
     }
 
     function selectLayer(id) {
@@ -479,6 +484,8 @@
     $('#btnExportPNG').addEventListener('click', () => exportMerged('image/png'));
     $('#btnExportJPEG').addEventListener('click', () => exportMerged('image/jpeg'));
     $('#btnExportProject').addEventListener('click', () => exportProject());
+
+    $('#btnAutoArrange').addEventListener('click', ()=> autoArrangeLayers());
 
     $('#btnUndo').addEventListener('click', () => undo());
     $('#btnRedo').addEventListener('click', () => redo());
@@ -621,6 +628,7 @@
     }
 
     async function loadFiles(files) {
+      const added = [];
       for (const f of files) {
         if (!f.type.startsWith('image/')) continue;
         try {
@@ -633,12 +641,47 @@
             const ok = confirm(`警告：图片像素 ${bitmap.width}×${bitmap.height} 过大，可能导致内存占用过高。继续导入吗？`);
             if (!ok) continue;
           }
-          addLayerFromSource({ name: f.name.replace(/\.[^.]+$/, ''), width: bitmap.width, height: bitmap.height, bitmap, srcDataURL });
+          const layer = addLayerFromSource({ name: f.name.replace(/\.[^.]+$/, ''), width: bitmap.width, height: bitmap.height, bitmap, srcDataURL });
+          if (layer) added.push(layer);
         } catch (e) {
           console.error(e);
           alert('导入失败: ' + e.message);
         }
       }
+      if (added.length >= 2) {
+        autoArrangeLayers(added);
+        announce(`已自动排列 ${added.length} 张图片`);
+      }
+    }
+
+    function autoArrangeLayers(layersSubset) {
+      const padding = 16; // outer padding within canvas
+      const gap = 12; // gap between cells
+      const areaW = Math.max(1, state.projectW - padding * 2);
+      const areaH = Math.max(1, state.projectH - padding * 2);
+      const targets = (layersSubset && layersSubset.length ? layersSubset : state.layers.filter(l => l.visible));
+      const n = targets.length;
+      if (!n) return;
+      const aspect = areaW / areaH;
+      let cols = Math.max(1, Math.round(Math.sqrt(n * aspect)));
+      let rows = Math.max(1, Math.ceil(n / cols));
+      while (cols * rows < n) rows++;
+      const cellW = (areaW - gap * (cols - 1)) / cols;
+      const cellH = (areaH - gap * (rows - 1)) / rows;
+      targets.forEach((l, i) => {
+        const r = Math.floor(i / cols);
+        const c = i % cols;
+        const x0 = padding + c * (cellW + gap);
+        const y0 = padding + r * (cellH + gap);
+        const scale = Math.min(cellW / l.width, cellH / l.height);
+        l.scaleX = l.scaleY = scale;
+        const w = l.width * scale;
+        const h = l.height * scale;
+        l.x = Math.round(x0 + (cellW - w) / 2);
+        l.y = Math.round(y0 + (cellH - h) / 2);
+      });
+      syncLayerInputs();
+      markDirty();
     }
 
     async function blobToDataURL(blob) {
@@ -1131,7 +1174,8 @@
       resizeViewCanvas();
       const rect = view.getBoundingClientRect();
       ctx.save();
-      ctx.setTransform(1,0,0,1,0,0);
+      const rate = dpr();
+      ctx.setTransform(rate,0,0,rate,0,0);
       ctx.clearRect(0,0,rect.width,rect.height);
 
       // Project area background (checker is DOM below)
@@ -1159,7 +1203,7 @@
 
       // Content
       ctx.save();
-      ctx.setTransform(state.zoom, 0, 0, state.zoom, state.panX, state.panY);
+      ctx.setTransform(state.zoom * rate, 0, 0, state.zoom * rate, state.panX * rate, state.panY * rate);
 
       // Background color if not transparent (for preview convenience only within project rect)
       if (state.background.type === 'color') {
@@ -1180,14 +1224,14 @@
       if (sel) {
         const w = sel.width * sel.scaleX; const h = sel.height * sel.scaleY;
         ctx.save();
-        ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 1/state.zoom; ctx.setLineDash([6/state.zoom, 4/state.zoom]);
-        ctx.strokeRect(sel.x+0.5/state.zoom, sel.y+0.5/state.zoom, w, h);
+        ctx.strokeStyle = '#22d3ee'; ctx.lineWidth = 1/(state.zoom * rate); ctx.setLineDash([6/(state.zoom * rate), 4/(state.zoom * rate)]);
+        ctx.strokeRect(sel.x+0.5/(state.zoom * rate), sel.y+0.5/(state.zoom * rate), w, h);
         // handles
         const hs = computeHandles(sel);
         ctx.fillStyle = '#22d3ee';
         for (const hpos of hs) {
           const p = { x: (hpos.vx - state.panX)/state.zoom, y: (hpos.vy - state.panY)/state.zoom };
-          ctx.beginPath(); ctx.arc(p.x, p.y, 4/state.zoom, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x, p.y, 4/(state.zoom * rate), 0, Math.PI*2); ctx.fill();
         }
         ctx.restore();
       }
