@@ -3,18 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>WebImagine — 纯 HTML 单页图像合并与画笔应用（离线可用）</title>
-  <meta name="description" content="WebImagine：无需安装与构建工具的单文件网页应用，支持多图层合并、基础画笔/橡皮擦、撤销重做、导入导出项目、PNG/JPEG 导出，兼容桌面与移动端。">
+  <title>WebImagine — 纯前端画板与多图自动排版工具</title>
+  <meta name="description" content="WebImagine：单页面离线可用的画板工具，支持画笔、文本、颜色、图片导入与复制、自动排列、撤销恢复、导出下载与全屏专注模式。">
   <meta name="theme-color" content="#0f172a">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f172a'/%3E%3Cpath d='M12 44l10-14 8 10 12-18 10 14v8H12z' fill='%23a7f3d0'/%3E%3Ccircle cx='24' cy='20' r='6' fill='%23fbbf24'/%3E%3C/svg%3E">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="WebImagine — 纯 HTML 单页图像合并与画笔应用">
-  <meta property="og:description" content="无需构建与第三方框架，支持多图层、画笔、撤销/重做、项目导入导出、PNG/JPEG。">
-  <meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAADUlEQVR4Ae3BMQEAAADCoPVPbQ0PoAAAAABNy1mKAAABNklEQVR4Xu3aMW7CQBBF0f8Uq3gq0uB3Wc7o2mQHH2b3QJAxLk5oY7c2xQyOZQm2mD7kqg9i+VYzvQ0m3b7cY0l6lFJ0y9x3oY2E/0M3kYgk8j4cZ8+o2hdgUq7v5t0jZ4uT3QZ3v0b0F8o8LxX+0g9G7s9q2N1zqk3o9n3l5n7H6gAk0w8yq+Jt4Y7eQwFh7vQH4v7i0k6g4b9z2ZQm7m8RkXx0b3F3CzGf1tC3wF1q7kGx7u7Gz9n8Fqf3g3a3v9Kf2C6z4k5p9u7n5v3eJ2bop1sR8q1D8lC5E7m4n3t4hQ6F9gO9VbJnxvC9xgJgC5o6VQ8v4rP8bH6n0U3r1J7dF9m8x6oG9b9wHk4v1s2mBqf2cQe0AAAAASUVORK5CYII=">
+  <meta property="og:title" content="WebImagine — 纯前端画板与多图自动排版工具">
+  <meta property="og:description" content="无需账号与安装，离线可用的画板：画笔、文字、颜色、图片导入复制、自动排列、撤销恢复、导出下载、全屏专注模式。">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="WebImagine — 纯 HTML 单页图像合并与画笔应用">
-  <meta name="twitter:description" content="单文件、离线可用、多图层合成 + 画笔/橡皮擦 + 项目导入导出。">
-
+  <meta name="twitter:title" content="WebImagine — 纯前端画板与多图自动排版工具">
+  <meta name="twitter:description" content="单文件网页应用，秒开即用。支持画笔/文字/撤销/导出/全屏。">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -22,19 +20,1021 @@
     "name": "WebImagine",
     "applicationCategory": "GraphicsApplication",
     "operatingSystem": "Web",
-    "description": "无需构建工具的单文件网页应用：多图层图像合并、画笔/橡皮擦、撤销重做、导入导出项目、PNG/JPEG 导出。",
+    "description": "单页面离线画板，支持画笔、文本、颜色、图片导入复制、自动排列、撤销恢复、导出下载以及全屏专注模式。",
     "softwareVersion": "1.0.0",
     "offers": {"@type": "Offer", "price": 0, "priceCurrency": "USD"},
     "url": "",
     "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAADUlEQVR4Ae3BMQEAAADCoPVPbQ0PoAAAAABNy1mKAAABNklEQVR4Xu3aMW7CQBBF0f8Uq3gq0uB3Wc7o2mQHH2b3QJAxLk5oY7c2xQyOZQm2mD7kqg9i+VYzvQ0m3b7cY0l6lFJ0y9x3oY2E/0M3kYgk8j4cZ8+o2hdgUq7v5t0jZ4uT3QZ3v0b0F8o8LxX+0g9G7s9q2N1zqk3o9n3l5n7H6gAk0w8yq+Jt4Y7eQwFh7vQH4v7i0k6g4b9z2ZQm7m8RkXx0b3F3CzGf1tC3wF1q7kGx7u7Gz9n8Fqf3g3a3v9Kf2C6z4k5p9u7n5v3eJ2bop1sR8q1D8lC5E7m4n3t4hQ6F9gO9VbJnxvC9xgJgC5o6VQ8v4rP8bH6n0U3r1J7dF9m8x6oG9b9wHk4v1s2mBqf2cQe0"
   }
   </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg-base: #f8fafc;
+      --bg-hero: #eef2ff;
+      --bg-toolbar: rgba(255, 255, 255, 0.82);
+      --bg-toolbar-border: rgba(148, 163, 184, 0.35);
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --surface: rgba(255, 255, 255, 0.9);
+      font-family: "Inter", "HarmonyOS Sans", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-base);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #fafdff 0%, var(--bg-hero) 100%);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(16px, 3vw, 28px) clamp(20px, 6vw, 72px) 12px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #0f172a 10%, #1e293b 90%);
+      display: grid;
+      place-items: center;
+      color: #a7f3d0;
+      font-weight: 700;
+    }
+
+    .top-links {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .hero {
+      flex: 1;
+      padding: clamp(16px, 4vw, 48px) clamp(20px, 6vw, 72px) clamp(48px, 8vw, 96px);
+      display: grid;
+      grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+      gap: clamp(24px, 5vw, 72px);
+      align-items: stretch;
+    }
+
+    .hero-copy h1 {
+      font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+      margin: 0 0 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-copy p {
+      margin: 0 0 20px;
+      line-height: 1.6;
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .feature-list {
+      list-style: none;
+      margin: 0 0 20px;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--text-muted);
+    }
+
+    .feature-list li span {
+      display: inline-flex;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .cta-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .cta-primary,
+    .cta-secondary {
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 150ms ease, background 150ms ease;
+    }
+
+    .cta-primary {
+      background: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.18);
+    }
+
+    .cta-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .cta-secondary {
+      background: transparent;
+      color: var(--primary);
+      border-color: rgba(37, 99, 235, 0.4);
+    }
+
+    .cta-secondary:hover {
+      background: rgba(37, 99, 235, 0.08);
+      transform: translateY(-1px);
+    }
+
+    .board-shell {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: 0 32px 70px rgba(15, 23, 42, 0.12);
+      overflow: hidden;
+      backdrop-filter: saturate(1.2) blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.28);
+    }
+
+    .board-shell.is-fullscreen {
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .board-toolbar {
+      padding: 18px clamp(16px, 3vw, 32px) 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      background: var(--bg-toolbar);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--bg-toolbar-border);
+      position: relative;
+      z-index: 2;
+    }
+
+    .toolbar-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .toolbar-row.tools {
+      gap: 8px;
+    }
+
+    .tool-button,
+    .action-button {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: #fff;
+      color: var(--text);
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: background 120ms ease, transform 120ms ease, box-shadow 150ms ease;
+    }
+
+    .tool-button:disabled,
+    .action-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .tool-button.active {
+      color: #fff;
+      background: var(--primary);
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+    }
+
+    .tool-button:not(.active):hover,
+    .action-button:not(:disabled):hover {
+      background: rgba(241, 245, 249, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .control {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      background: rgba(255, 255, 255, 0.92);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .control input[type="color"] {
+      border: none;
+      width: 32px;
+      height: 20px;
+      padding: 0;
+      background: none;
+      cursor: pointer;
+    }
+
+    .control input[type="range"] {
+      width: 140px;
+    }
+
+    .board-stage {
+      position: relative;
+      flex: 1;
+      min-height: clamp(320px, 65vh, 640px);
+      background: repeating-linear-gradient(45deg, #f8fafc 0, #f8fafc 12px, #eef2ff 12px, #eef2ff 24px);
+      display: flex;
+    }
+
+    canvas#board {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #ffffff;
+      margin: auto;
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
+      border-radius: 20px;
+    }
+
+    .drop-hint {
+      position: absolute;
+      inset: 16px;
+      border-radius: 16px;
+      border: 2px dashed rgba(37, 99, 235, 0.22);
+      background: rgba(37, 99, 235, 0.04);
+      color: var(--primary);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      display: grid;
+      place-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .board-stage.dragover .drop-hint {
+      opacity: 1;
+    }
+
+    footer {
+      padding: 28px clamp(20px, 6vw, 72px); 
+      color: rgba(71, 85, 105, 0.8);
+      font-size: 0.85rem;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .text-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 40;
+    }
+
+    .text-panel[hidden] {
+      display: none;
+    }
+
+    .text-dialog {
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 20px;
+      padding: 28px;
+      width: min(420px, 90vw);
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+      display: grid;
+      gap: 16px;
+    }
+
+    .text-dialog h2 {
+      margin: 0;
+      font-size: 1.4rem;
+    }
+
+    .text-dialog textarea {
+      width: 100%;
+      min-height: 110px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      font-family: inherit;
+      resize: vertical;
+    }
+
+    .text-dialog textarea:focus {
+      outline: 3px solid rgba(37, 99, 235, 0.2);
+      border-color: rgba(37, 99, 235, 0.6);
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .flat-button,
+    .solid-button {
+      border-radius: 12px;
+      border: none;
+      padding: 10px 18px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .flat-button {
+      background: rgba(148, 163, 184, 0.16);
+      color: var(--text);
+    }
+
+    .flat-button:hover {
+      background: rgba(148, 163, 184, 0.26);
+    }
+
+    .solid-button {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
+    }
+
+    .solid-button:hover {
+      background: var(--primary-dark);
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 45;
+      left: 50%;
+      bottom: 28px;
+      transform: translate(-50%, 16px);
+      padding: 10px 16px;
+      border-radius: 999px;
+      background: rgba(15, 23, 42, 0.88);
+      color: #f8fafc;
+      font-size: 0.9rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 160ms ease, transform 160ms ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 1080px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .board-shell {
+        order: 2;
+      }
+
+      .hero-copy {
+        order: 1;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .top-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .top-links {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .board-toolbar {
+        position: sticky;
+        top: 0;
+      }
+
+      .toolbar-row {
+        gap: 8px;
+      }
+
+      .control input[type="range"] {
+        width: 110px;
+      }
+
+      footer {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
 </head>
 <body>
   <noscript>
-    <div style="padding:12px;background:#fee2e2;color:#7f1d1d;border-bottom:1px solid #fecaca;">
-      本应用需要启用 JavaScript 才能运行；它是一个仅依赖原生 Web API 的单文件图像合并与涂鸦工具。
+    <div style="padding:12px;background:#fee2e2;color:#7f1d1d;border-bottom:1px solid #fecaca;text-align:center;font-weight:600;">
+      本应用需要启用 JavaScript 才能运行；它是一个仅依赖原生 Web API 与 Fabric.js 的离线画板工具。
     </div>
   </noscript>
+  <header class="top-bar">
+    <div class="brand" aria-label="WebImagine">
+      <span class="brand-icon" aria-hidden="true">Wi</span>
+      <span>WebImagine 画板</span>
+    </div>
+    <div class="top-links">
+      <span>纯 HTML · 离线可用</span>
+      <span>⌘/Ctrl + S 保存到本地</span>
+    </div>
+  </header>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <h1>随时随地的创作画板</h1>
+        <p>WebImagine 是一个零依赖、可离线使用的纯前端画板。画笔、文字、图片与排版工具整合在一个页面中，打开即可创作、整理并导出作品。</p>
+        <ul class="feature-list" aria-label="特性列表">
+          <li><span>✏️ 画笔 / 橡皮擦：</span>流畅手绘、可调笔刷粗细与颜色</li>
+          <li><span>🔤 文字输入：</span>随时添加文字并保留可编辑属性</li>
+          <li><span>🖼️ 图片导入：</span>拖拽或选择文件，支持批量自动网格排版</li>
+          <li><span>↩️ 撤销恢复：</span>无限次撤销 / 恢复与图层复制</li>
+          <li><span>📤 导出下载：</span>一键导出 PNG，快速分享成果</li>
+          <li><span>⛶ 全屏专注：</span>进入沉浸模式，聚焦创作</li>
+        </ul>
+        <div class="cta-group">
+          <button class="cta-primary" type="button" data-action="focus-board">立即创作</button>
+          <button class="cta-secondary" type="button" data-action="enter-fullscreen">全屏专注模式</button>
+        </div>
+      </div>
+      <div class="board-shell" id="boardShell" aria-label="交互画板">
+        <div class="board-toolbar" role="toolbar" aria-label="画板工具栏">
+          <div class="toolbar-row tools">
+            <button class="tool-button active" type="button" data-tool="pointer">选择</button>
+            <button class="tool-button" type="button" data-tool="brush">画笔</button>
+            <button class="tool-button" type="button" data-action="text">文字</button>
+            <button class="tool-button" type="button" data-tool="eraser">橡皮擦</button>
+          </div>
+          <div class="toolbar-row">
+            <label class="control" title="画笔颜色">
+              <span>颜色</span>
+              <input type="color" value="#2563eb" id="colorPicker" aria-label="画笔颜色" />
+            </label>
+            <label class="control" title="画笔粗细">
+              <span>粗细</span>
+              <input type="range" min="1" max="60" value="8" id="brushSize" aria-label="画笔粗细" />
+            </label>
+            <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
+            <button class="action-button" type="button" data-action="redo" aria-label="恢复 (Ctrl+Shift+Z)">恢复</button>
+          </div>
+          <div class="toolbar-row">
+            <label class="action-button" for="imageInput" role="button" tabindex="0">导入图片
+              <input type="file" id="imageInput" accept="image/*" multiple hidden>
+            </label>
+            <button class="action-button" type="button" data-action="duplicate">复制图层</button>
+            <button class="action-button" type="button" data-action="arrange">自动排列</button>
+            <button class="action-button" type="button" data-action="export">导出 PNG</button>
+            <button class="action-button" type="button" data-action="fullscreen">全屏专注</button>
+            <button class="action-button" type="button" data-action="reset">清空画布</button>
+          </div>
+        </div>
+        <div class="board-stage" id="boardStage">
+          <canvas id="board" role="img" aria-label="绘图画布"></canvas>
+          <div class="drop-hint" id="dropHint">拖拽图片到这里，自动导入并排版</div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <span>© <span id="year"></span> WebImagine. 单文件纯前端应用。</span>
+    <span>快捷键：Ctrl/Cmd + Z 撤销 · Ctrl/Cmd + Shift + Z 恢复 · Delete 删除 · Ctrl/Cmd + D 复制</span>
+  </footer>
+
+  <div class="text-panel" id="textPanel" hidden>
+    <div class="text-dialog" role="dialog" aria-modal="true" aria-labelledby="textDialogTitle">
+      <h2 id="textDialogTitle">添加文字</h2>
+      <p style="margin:0;color:var(--text-muted);font-size:0.9rem;">输入完成后，可在画布中再次双击进行编辑。</p>
+      <textarea id="textInput" placeholder="输入要添加的文字…" aria-label="文字内容"></textarea>
+      <div class="dialog-actions">
+        <button type="button" class="flat-button" data-action="cancel-text">取消</button>
+        <button type="button" class="solid-button" data-action="confirm-text">添加到画布</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js" integrity="sha256-D7fgcPAt0tvv028RAB4x0LbuNcnTiQ6JcEX/23EQNZ8=" crossorigin="anonymous"></script>
+  <script>
+    (function () {
+      const boardShell = document.getElementById('boardShell');
+      const boardStage = document.getElementById('boardStage');
+      const canvasElement = document.getElementById('board');
+      const colorPicker = document.getElementById('colorPicker');
+      const brushSizeInput = document.getElementById('brushSize');
+      const imageInput = document.getElementById('imageInput');
+      const textPanel = document.getElementById('textPanel');
+      const textInput = document.getElementById('textInput');
+      const toast = document.getElementById('toast');
+      const heroFocusBtn = document.querySelector('[data-action="focus-board"]');
+      const heroFullscreenBtn = document.querySelector('[data-action="enter-fullscreen"]');
+
+      const canvas = new fabric.Canvas(canvasElement, {
+        backgroundColor: '#ffffff',
+        selection: true,
+        preserveObjectStacking: true
+      });
+
+      const history = {
+        undoStack: [],
+        redoStack: [],
+        isRestoring: false
+      };
+
+      let currentBrushMode = 'brush';
+
+      function resizeCanvas() {
+        const rect = boardStage.getBoundingClientRect();
+        const width = Math.max(rect.width - 32, 240);
+        const height = Math.max(rect.height - 32, 240);
+        canvas.setWidth(width);
+        canvas.setHeight(height);
+        canvasElement.style.margin = '16px auto';
+        canvas.calcOffset();
+        canvas.renderAll();
+      }
+
+      window.addEventListener('resize', () => requestAnimationFrame(resizeCanvas));
+      resizeCanvas();
+
+      function showToast(message) {
+        if (!toast) return;
+        toast.textContent = message;
+        toast.classList.add('show');
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => toast.classList.remove('show'), 2200);
+      }
+
+      function saveHistory() {
+        if (history.isRestoring) return;
+        const state = JSON.stringify(canvas);
+        if (history.undoStack.length && history.undoStack[history.undoStack.length - 1] === state) {
+          return;
+        }
+        history.undoStack.push(state);
+        if (history.undoStack.length > 80) {
+          history.undoStack.shift();
+        }
+        history.redoStack.length = 0;
+        updateHistoryButtons();
+      }
+
+      function loadHistory(state) {
+        history.isRestoring = true;
+        canvas.loadFromJSON(state, () => {
+          canvas.renderAll();
+          history.isRestoring = false;
+          updateHistoryButtons();
+        });
+      }
+
+      function undo() {
+        if (history.undoStack.length <= 1) {
+          return;
+        }
+        const current = history.undoStack.pop();
+        history.redoStack.push(current);
+        const previous = history.undoStack[history.undoStack.length - 1];
+        loadHistory(previous);
+      }
+
+      function redo() {
+        if (!history.redoStack.length) {
+          return;
+        }
+        const state = history.redoStack.pop();
+        history.undoStack.push(state);
+        loadHistory(state);
+      }
+
+      function updateHistoryButtons() {
+        const undoBtn = document.querySelector('[data-action="undo"]');
+        const redoBtn = document.querySelector('[data-action="redo"]');
+        if (undoBtn) {
+          undoBtn.disabled = history.undoStack.length <= 1;
+        }
+        if (redoBtn) {
+          redoBtn.disabled = history.redoStack.length === 0;
+        }
+      }
+
+      function setTool(tool) {
+        const buttons = document.querySelectorAll('[data-tool]');
+        buttons.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.tool === tool);
+        });
+        if (tool === 'brush') {
+          currentBrushMode = 'brush';
+          canvas.isDrawingMode = true;
+          canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+          canvas.freeDrawingBrush.color = colorPicker.value;
+          canvas.freeDrawingBrush.width = parseInt(brushSizeInput.value, 10) || 8;
+        } else if (tool === 'eraser') {
+          currentBrushMode = 'erase';
+          canvas.isDrawingMode = true;
+          canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+          canvas.freeDrawingBrush.color = '#ffffff';
+          canvas.freeDrawingBrush.width = parseInt(brushSizeInput.value, 10) || 18;
+        } else {
+          canvas.isDrawingMode = false;
+        }
+      }
+
+      function ensureBrushSettings() {
+        if (canvas.isDrawingMode && currentBrushMode === 'brush') {
+          canvas.freeDrawingBrush.color = colorPicker.value;
+        }
+        if (canvas.isDrawingMode) {
+          canvas.freeDrawingBrush.width = parseInt(brushSizeInput.value, 10) || 8;
+        }
+      }
+
+      function hexFromColor(color) {
+        const ctx = document.createElement('canvas').getContext('2d');
+        if (!ctx) return color;
+        ctx.fillStyle = color;
+        const computed = ctx.fillStyle;
+        if (computed.startsWith('#')) {
+          return computed;
+        }
+        return color;
+      }
+
+      function synchronizeColorWithSelection() {
+        const activeObject = canvas.getActiveObject();
+        if (!activeObject) return;
+        if (activeObject.type === 'textbox') {
+          colorPicker.value = hexFromColor(activeObject.fill || '#2563eb');
+        } else if (activeObject.type === 'path') {
+          colorPicker.value = hexFromColor(activeObject.stroke || '#2563eb');
+        }
+      }
+
+      function openTextDialog() {
+        textPanel.hidden = false;
+        textInput.value = '';
+        setTool('pointer');
+        setTimeout(() => textInput.focus({ preventScroll: false }), 50);
+      }
+
+      function closeTextDialog() {
+        textPanel.hidden = true;
+        textInput.value = '';
+      }
+
+      function addTextToCanvas() {
+        const value = textInput.value.trim();
+        if (!value) {
+          showToast('请输入文字内容');
+          textInput.focus();
+          return;
+        }
+        const textbox = new fabric.Textbox(value, {
+          left: canvas.getWidth() / 2,
+          top: canvas.getHeight() / 2,
+          originX: 'center',
+          originY: 'center',
+          fontSize: 36,
+          fill: colorPicker.value,
+          fontFamily: '"Inter", "PingFang SC", "Microsoft YaHei", sans-serif',
+          editable: true,
+          splitByGrapheme: true,
+          padding: 8
+        });
+        canvas.add(textbox);
+        canvas.setActiveObject(textbox);
+        canvas.centerObject(textbox);
+        textbox.enterEditing();
+        textbox.hiddenTextarea && textbox.hiddenTextarea.focus();
+        canvas.renderAll();
+        saveHistory();
+        closeTextDialog();
+        showToast('文字已添加，可双击继续编辑');
+      }
+
+      function handleFiles(fileList) {
+        const files = Array.from(fileList).filter(file => file.type.startsWith('image/'));
+        if (!files.length) {
+          showToast('请选择图片文件');
+          return;
+        }
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = function (evt) {
+            const dataUrl = evt.target?.result;
+            if (!dataUrl) return;
+            fabric.Image.fromURL(dataUrl, (img) => {
+              const maxWidth = canvas.getWidth() * 0.6;
+              const maxHeight = canvas.getHeight() * 0.6;
+              const scale = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+              if (isFinite(scale) && scale > 0) {
+                img.scale(scale);
+              }
+              img.set({
+                left: canvas.getWidth() / 2,
+                top: canvas.getHeight() / 2,
+                originX: 'center',
+                originY: 'center'
+              });
+              canvas.add(img);
+              canvas.setActiveObject(img);
+              canvas.centerObject(img);
+              canvas.renderAll();
+              saveHistory();
+              showToast('图片已导入画布');
+            }, { crossOrigin: 'anonymous' });
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function autoArrangeImages() {
+        const images = canvas.getObjects().filter(obj => obj.type === 'image');
+        if (!images.length) {
+          showToast('画布上暂无图片');
+          return;
+        }
+        const padding = 36;
+        const canvasWidth = canvas.getWidth();
+        const canvasHeight = canvas.getHeight();
+        const columns = Math.ceil(Math.sqrt(images.length));
+        const rows = Math.ceil(images.length / columns);
+        const cellWidth = (canvasWidth - padding * 2) / columns;
+        const cellHeight = (canvasHeight - padding * 2) / rows;
+        images.forEach((img, index) => {
+          const col = index % columns;
+          const row = Math.floor(index / columns);
+          const targetWidth = cellWidth - 18;
+          const targetHeight = cellHeight - 18;
+          const currentWidth = img.getScaledWidth();
+          const currentHeight = img.getScaledHeight();
+          const scale = Math.min(targetWidth / currentWidth, targetHeight / currentHeight, 1);
+          if (isFinite(scale) && scale > 0) {
+            img.scale(img.scaleX * scale);
+          }
+          const left = padding + col * cellWidth + (cellWidth - img.getScaledWidth()) / 2;
+          const top = padding + row * cellHeight + (cellHeight - img.getScaledHeight()) / 2;
+          img.set({ left, top });
+          img.setCoords();
+        });
+        canvas.discardActiveObject();
+        canvas.renderAll();
+        saveHistory();
+        showToast('图片已自动排列');
+      }
+
+      function exportCanvas() {
+        if (!canvas.getObjects().length) {
+          showToast('画布为空，无可导出的内容');
+          return;
+        }
+        const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 2, enableRetinaScaling: true });
+        const link = document.createElement('a');
+        link.download = `webimagine-${Date.now()}.png`;
+        link.href = dataUrl;
+        link.click();
+        showToast('PNG 导出完成');
+      }
+
+      function duplicateObject() {
+        const active = canvas.getActiveObject();
+        if (!active) {
+          showToast('请选择要复制的对象');
+          return;
+        }
+        active.clone(clone => {
+          clone.set({ left: active.left + 36, top: active.top + 36 });
+          canvas.discardActiveObject();
+          canvas.add(clone);
+          canvas.setActiveObject(clone);
+          clone.setCoords();
+          canvas.renderAll();
+          saveHistory();
+          showToast('已复制一份对象');
+        });
+      }
+
+      function toggleFullscreen() {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else {
+          boardShell.requestFullscreen?.();
+        }
+      }
+
+      function resetCanvas() {
+        if (!canvas.getObjects().length) {
+          showToast('画布已经是空的');
+          return;
+        }
+        canvas.clear();
+        canvas.backgroundColor = '#ffffff';
+        saveHistory();
+        showToast('画布已清空');
+      }
+
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      document.querySelectorAll('[data-tool]').forEach(button => {
+        button.addEventListener('click', () => {
+          setTool(button.dataset.tool);
+        });
+      });
+
+      document.querySelector('[data-action="text"]').addEventListener('click', () => {
+        openTextDialog();
+      });
+
+      document.querySelector('[data-action="undo"]').addEventListener('click', () => undo());
+      document.querySelector('[data-action="redo"]').addEventListener('click', () => redo());
+      document.querySelector('[data-action="arrange"]').addEventListener('click', () => autoArrangeImages());
+      document.querySelector('[data-action="export"]').addEventListener('click', () => exportCanvas());
+      document.querySelector('[data-action="duplicate"]').addEventListener('click', () => duplicateObject());
+      document.querySelector('[data-action="fullscreen"]').addEventListener('click', () => toggleFullscreen());
+      document.querySelector('[data-action="reset"]').addEventListener('click', () => resetCanvas());
+
+      heroFocusBtn?.addEventListener('click', () => {
+        boardShell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+
+      heroFullscreenBtn?.addEventListener('click', () => toggleFullscreen());
+
+      document.querySelector('[data-action="cancel-text"]').addEventListener('click', () => closeTextDialog());
+      document.querySelector('[data-action="confirm-text"]').addEventListener('click', () => addTextToCanvas());
+
+      textPanel.addEventListener('click', (event) => {
+        if (event.target === textPanel) {
+          closeTextDialog();
+        }
+      });
+
+      imageInput.addEventListener('change', (event) => {
+        handleFiles(event.target.files);
+        imageInput.value = '';
+      });
+
+      colorPicker.addEventListener('input', () => {
+        ensureBrushSettings();
+        const activeObject = canvas.getActiveObject();
+        if (activeObject) {
+          if (activeObject.type === 'textbox') {
+            activeObject.set('fill', colorPicker.value);
+            canvas.renderAll();
+            saveHistory();
+          } else if (activeObject.type === 'path') {
+            activeObject.set('stroke', colorPicker.value);
+            canvas.renderAll();
+            saveHistory();
+          }
+        }
+      });
+
+      brushSizeInput.addEventListener('input', () => {
+        ensureBrushSettings();
+      });
+
+      boardStage.addEventListener('dragover', (event) => {
+        event.preventDefault();
+        boardStage.classList.add('dragover');
+      });
+
+      boardStage.addEventListener('dragleave', () => {
+        boardStage.classList.remove('dragover');
+      });
+
+      boardStage.addEventListener('drop', (event) => {
+        event.preventDefault();
+        boardStage.classList.remove('dragover');
+        handleFiles(event.dataTransfer.files);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        const isInputing = event.target && (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable);
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
+          event.preventDefault();
+          if (event.shiftKey) {
+            redo();
+          } else {
+            undo();
+          }
+        }
+        if ((event.metaKey || event.ctrlKey) && (event.key.toLowerCase() === 'y')) {
+          event.preventDefault();
+          redo();
+        }
+        if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'd') {
+          event.preventDefault();
+          duplicateObject();
+        }
+        if (!isInputing && (event.key === 'Delete' || event.key === 'Backspace')) {
+          const activeObjects = canvas.getActiveObjects();
+          if (activeObjects.length) {
+            event.preventDefault();
+            activeObjects.forEach(obj => canvas.remove(obj));
+            canvas.discardActiveObject();
+            canvas.renderAll();
+            saveHistory();
+            showToast('已删除选中对象');
+          }
+        }
+        if (event.key === 'Escape' && !textPanel.hidden) {
+          closeTextDialog();
+        }
+      });
+
+      canvas.on('selection:created', synchronizeColorWithSelection);
+      canvas.on('selection:updated', synchronizeColorWithSelection);
+      canvas.on('selection:cleared', () => ensureBrushSettings());
+
+      canvas.on('path:created', () => {
+        if (currentBrushMode === 'erase') {
+          setTool('eraser');
+        }
+        saveHistory();
+      });
+      canvas.on('object:modified', saveHistory);
+      canvas.on('object:removed', saveHistory);
+      canvas.on('object:added', function () {
+        if (!history.undoStack.length) {
+          saveHistory();
+        }
+      });
+
+      document.addEventListener('fullscreenchange', () => {
+        const fullscreenButton = document.querySelector('[data-action="fullscreen"]');
+        const isFull = Boolean(document.fullscreenElement);
+        boardShell.classList.toggle('is-fullscreen', isFull);
+        if (fullscreenButton) {
+          fullscreenButton.textContent = isFull ? '退出全屏' : '全屏专注';
+        }
+      });
+
+      setTool('pointer');
+      saveHistory();
+      updateHistoryButtons();
+    })();
+  </script>
 </body>
 </html>
