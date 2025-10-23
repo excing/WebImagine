@@ -350,6 +350,7 @@
       min-height: clamp(320px, 65vh, 640px);
       background: repeating-linear-gradient(45deg, #f8fafc 0, #f8fafc 12px, #eef2ff 12px, #eef2ff 24px);
       display: flex;
+      overflow: auto;
     }
 
     canvas#board {
@@ -359,7 +360,7 @@
       background: #ffffff;
       margin: auto;
       box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
-      border-radius: 20px;
+      border-radius: 8px;
     }
 
     .drop-hint {
@@ -1039,6 +1040,27 @@
             });
             img.setCoords();
           });
+        }
+
+        // 计算排列后所有图片的边界
+        let maxRight = 0;
+        let maxBottom = 0;
+
+        images.forEach((img) => {
+          const right = img.left + img.getScaledWidth() / 2;
+          const bottom = img.top + img.getScaledHeight() / 2;
+          maxRight = Math.max(maxRight, right);
+          maxBottom = Math.max(maxBottom, bottom);
+        });
+
+        // 如果超出画布，则扩大画布大小
+        const requiredWidth = Math.max(canvas.getWidth(), maxRight + padding);
+        const requiredHeight = Math.max(canvas.getHeight(), maxBottom + padding);
+
+        if (requiredWidth > canvas.getWidth() || requiredHeight > canvas.getHeight()) {
+          canvas.setWidth(requiredWidth);
+          canvas.setHeight(requiredHeight);
+          canvas.calcOffset();
         }
 
         canvas.discardActiveObject();
