@@ -302,6 +302,48 @@
       background: rgba(37, 99, 235, 0.05);
     }
 
+    .arrange-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .arrange-control input[type="number"] {
+      border: none;
+      width: 45px;
+      height: 36px;
+      padding: 0 6px;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.85rem;
+      text-align: center;
+      border-right: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .arrange-control input[type="number"]:last-of-type {
+      border-right: none;
+    }
+
+    .arrange-control input[type="number"]:focus {
+      outline: none;
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    .arrange-control .action-button {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      border-left: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .arrange-control .action-button:hover {
+      background: rgba(37, 99, 235, 0.08);
+    }
+
     .board-stage {
       position: relative;
       flex: 1;
@@ -561,15 +603,11 @@
               <input type="file" id="imageInput" accept="image/*" multiple hidden>
             </label>
             <button class="action-button" type="button" data-action="duplicate">复制图层</button>
-            <label class="control" title="图片X间距">
-              <span>X间距</span>
-              <input type="number" min="0" max="100" value="18" id="gapX" aria-label="排列X间距" />
-            </label>
-            <label class="control" title="图片Y间距">
-              <span>Y间距</span>
-              <input type="number" min="0" max="100" value="18" id="gapY" aria-label="排列Y间距" />
-            </label>
-            <button class="action-button" type="button" data-action="arrange">自动排列</button>
+            <div class="arrange-control">
+              <input type="number" min="0" max="100" value="0" id="gapX" aria-label="排列X间距" placeholder="X" title="图片水平间距" />
+              <input type="number" min="0" max="100" value="0" id="gapY" aria-label="排列Y间距" placeholder="Y" title="图片垂直间距" />
+              <button class="action-button" type="button" data-action="arrange">自动排列</button>
+            </div>
             <button class="action-button" type="button" data-action="export">导出 PNG</button>
             <button class="action-button" type="button" data-action="fullscreen">全屏专注</button>
             <button class="action-button" type="button" data-action="reset">清空画布</button>
@@ -925,8 +963,8 @@
           return;
         }
         const padding = 36;
-        const gapX = parseInt(document.getElementById('gapX').value, 10) || 18;
-        const gapY = parseInt(document.getElementById('gapY').value, 10) || 18;
+        const gapX = parseInt(document.getElementById('gapX').value, 10);
+        const gapY = parseInt(document.getElementById('gapY').value, 10);
         const canvasWidth = canvas.getWidth();
         const canvasHeight = canvas.getHeight();
 
