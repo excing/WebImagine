@@ -536,6 +536,7 @@
               <span>粗细</span>
               <input type="range" min="1" max="60" value="8" id="brushSize" aria-label="画笔粗细" />
             </label>
+            <button class="action-button" type="button" data-action="toggle-snap" aria-label="启用/禁用吸附对齐" title="启用吸附功能后，移动对象时会自动对齐到网格或其他对象">吸附</button>
             <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
             <button class="action-button" type="button" data-action="redo" aria-label="恢复 (Ctrl+Shift+Z)">恢复</button>
           </div>
@@ -604,6 +605,89 @@
       };
 
       let currentBrushMode = 'brush';
+      let snapEnabled = false;
+      const SNAP_THRESHOLD = 8;
+      const GRID_SIZE = 16;
+
+      function calculateSnap(obj) {
+        if (!snapEnabled || !obj) return;
+
+        const objBounds = {
+          left: obj.left - obj.getScaledWidth() / 2,
+          right: obj.left + obj.getScaledWidth() / 2,
+          top: obj.top - obj.getScaledHeight() / 2,
+          bottom: obj.top + obj.getScaledHeight() / 2,
+          centerX: obj.left,
+          centerY: obj.top
+        };
+
+        let snapX = obj.left;
+        let snapY = obj.top;
+        let snapDistX = SNAP_THRESHOLD;
+        let snapDistY = SNAP_THRESHOLD;
+
+        // Snap to grid
+        const gridSnapX = Math.round(obj.left / GRID_SIZE) * GRID_SIZE;
+        const gridSnapY = Math.round(obj.top / GRID_SIZE) * GRID_SIZE;
+        const gridDistX = Math.abs(obj.left - gridSnapX);
+        const gridDistY = Math.abs(obj.top - gridSnapY);
+
+        if (gridDistX < snapDistX) {
+          snapX = gridSnapX;
+          snapDistX = gridDistX;
+        }
+        if (gridDistY < snapDistY) {
+          snapY = gridSnapY;
+          snapDistY = gridDistY;
+        }
+
+        // Snap to other objects
+        canvas.forEachObject(function (otherObj) {
+          if (otherObj === obj || otherObj.selectable === false) return;
+
+          const otherBounds = {
+            left: otherObj.left - otherObj.getScaledWidth() / 2,
+            right: otherObj.left + otherObj.getScaledWidth() / 2,
+            top: otherObj.top - otherObj.getScaledHeight() / 2,
+            bottom: otherObj.top + otherObj.getScaledHeight() / 2,
+            centerX: otherObj.left,
+            centerY: otherObj.top
+          };
+
+          // Snap to left/right edges
+          const snapPoints = [
+            { pos: otherBounds.left, objEdge: 'left', type: 'edge' },
+            { pos: otherBounds.right, objEdge: 'right', type: 'edge' },
+            { pos: otherBounds.centerX, objEdge: 'centerX', type: 'center' }
+          ];
+
+          snapPoints.forEach(point => {
+            const dist = Math.abs(obj.left - point.pos);
+            if (dist < snapDistX) {
+              snapX = point.pos;
+              snapDistX = dist;
+            }
+          });
+
+          // Snap to top/bottom edges
+          const ySnapPoints = [
+            { pos: otherBounds.top, objEdge: 'top', type: 'edge' },
+            { pos: otherBounds.bottom, objEdge: 'bottom', type: 'edge' },
+            { pos: otherBounds.centerY, objEdge: 'centerY', type: 'center' }
+          ];
+
+          ySnapPoints.forEach(point => {
+            const dist = Math.abs(obj.top - point.pos);
+            if (dist < snapDistY) {
+              snapY = point.pos;
+              snapDistY = dist;
+            }
+          });
+        });
+
+        obj.left = snapX;
+        obj.top = snapY;
+      }
 
       function resizeCanvas() {
         const rect = boardStage.getBoundingClientRect();
@@ -907,6 +991,12 @@
         openTextDialog();
       });
 
+      document.querySelector('[data-action="toggle-snap"]').addEventListener('click', (e) => {
+        snapEnabled = !snapEnabled;
+        e.target.classList.toggle('active', snapEnabled);
+        showToast(snapEnabled ? '吸附已启用' : '吸附已禁用');
+      });
+
       document.querySelector('[data-action="undo"]').addEventListener('click', () => undo());
       document.querySelector('[data-action="redo"]').addEventListener('click', () => redo());
       document.querySelector('[data-action="arrange"]').addEventListener('click', () => autoArrangeImages());
@@ -1007,6 +1097,10 @@
       canvas.on('selection:created', synchronizeColorWithSelection);
       canvas.on('selection:updated', synchronizeColorWithSelection);
       canvas.on('selection:cleared', () => ensureBrushSettings());
+
+      canvas.on('object:moving', (e) => {
+        calculateSnap(e.target);
+      });
 
       canvas.on('path:created', () => {
         if (currentBrushMode === 'erase') {
