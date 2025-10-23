@@ -350,17 +350,18 @@
       min-height: clamp(320px, 65vh, 640px);
       background: repeating-linear-gradient(45deg, #f8fafc 0, #f8fafc 12px, #eef2ff 12px, #eef2ff 24px);
       display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
       overflow: auto;
+      padding: 16px;
     }
 
     canvas#board {
-      width: 100%;
-      height: 100%;
       display: block;
       background: #ffffff;
-      margin: auto;
       box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
-      border-radius: 8px;
+      border-radius: 16px;
+      flex-shrink: 0;
     }
 
     .drop-hint {
@@ -758,7 +759,6 @@
         const height = Math.max(rect.height - 32, 240);
         canvas.setWidth(width);
         canvas.setHeight(height);
-        canvasElement.style.margin = '16px auto';
         canvas.calcOffset();
         canvas.renderAll();
       }
