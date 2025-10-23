@@ -964,35 +964,82 @@
         }
         const padding = 36;
         const gapX = parseInt(document.getElementById('gapX').value, 10);
-        const gapY = parseInt(document.getElementById('gapY').value, 10);
+        const rows = parseInt(document.getElementById('gapY').value, 10);
         const canvasWidth = canvas.getWidth();
-        const canvasHeight = canvas.getHeight();
 
-        let currentX = padding;
-        let currentY = padding;
-        let rowHeight = 0;
+        if (rows === 0 || rows === 1) {
+          // 自动换行模式
+          let currentX = padding;
+          let currentY = padding;
+          let rowHeight = 0;
 
-        images.forEach((img) => {
-          const imgWidth = img.getScaledWidth();
-          const imgHeight = img.getScaledHeight();
+          images.forEach((img) => {
+            const imgWidth = img.getScaledWidth();
+            const imgHeight = img.getScaledHeight();
 
-          if (currentX + imgWidth + gapX > canvasWidth - padding) {
-            currentX = padding;
-            currentY += rowHeight + gapY;
-            rowHeight = 0;
+            if (currentX + imgWidth + gapX > canvasWidth - padding) {
+              currentX = padding;
+              currentY += rowHeight + gapX;
+              rowHeight = 0;
+            }
+
+            img.set({
+              left: currentX + imgWidth / 2,
+              top: currentY + imgHeight / 2,
+              originX: 'center',
+              originY: 'center'
+            });
+            img.setCoords();
+
+            currentX += imgWidth + gapX;
+            rowHeight = Math.max(rowHeight, imgHeight);
+          });
+        } else {
+          // 固定行数模式
+          const imagesPerRow = Math.ceil(images.length / rows);
+          const rowHeights = new Array(rows).fill(0);
+          const rowWidths = Array.from({ length: rows }, () => []);
+
+          // 第一遍：计算每行的最大高度和每列的宽度
+          images.forEach((img, index) => {
+            const row = Math.floor(index / imagesPerRow);
+            const col = index % imagesPerRow;
+
+            rowHeights[row] = Math.max(rowHeights[row], img.getScaledHeight());
+            rowWidths[row][col] = img.getScaledWidth();
+          });
+
+          // 计算每行的起始 Y 坐标
+          const rowYPositions = [padding];
+          for (let i = 1; i < rows; i++) {
+            rowYPositions[i] = rowYPositions[i - 1] + rowHeights[i - 1] + gapX;
           }
 
-          img.set({
-            left: currentX + imgWidth / 2,
-            top: currentY + imgHeight / 2,
-            originX: 'center',
-            originY: 'center'
-          });
-          img.setCoords();
+          // 第二遍：设置每个图片的位置
+          images.forEach((img, index) => {
+            const row = Math.floor(index / imagesPerRow);
+            const col = index % imagesPerRow;
 
-          currentX += imgWidth + gapX;
-          rowHeight = Math.max(rowHeight, imgHeight);
-        });
+            // 计算该列的 X 位置
+            let currentX = padding;
+            for (let c = 0; c < col; c++) {
+              if (rowWidths[row][c] !== undefined) {
+                currentX += rowWidths[row][c] + gapX;
+              }
+            }
+
+            const imgWidth = img.getScaledWidth();
+            const imgHeight = img.getScaledHeight();
+
+            img.set({
+              left: currentX + imgWidth / 2,
+              top: rowYPositions[row] + imgHeight / 2,
+              originX: 'center',
+              originY: 'center'
+            });
+            img.setCoords();
+          });
+        }
 
         canvas.discardActiveObject();
         canvas.renderAll();
