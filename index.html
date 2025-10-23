@@ -901,28 +901,37 @@
           return;
         }
         const padding = 36;
+        const gap = 18;
         const canvasWidth = canvas.getWidth();
         const canvasHeight = canvas.getHeight();
-        const columns = Math.ceil(Math.sqrt(images.length));
-        const rows = Math.ceil(images.length / columns);
-        const cellWidth = (canvasWidth - padding * 2) / columns;
-        const cellHeight = (canvasHeight - padding * 2) / rows;
-        images.forEach((img, index) => {
-          const col = index % columns;
-          const row = Math.floor(index / columns);
-          const targetWidth = cellWidth - 18;
-          const targetHeight = cellHeight - 18;
-          const currentWidth = img.getScaledWidth();
-          const currentHeight = img.getScaledHeight();
-          const scale = Math.min(targetWidth / currentWidth, targetHeight / currentHeight, 1);
-          if (isFinite(scale) && scale > 0) {
-            img.scale(img.scaleX * scale);
+        const availableWidth = canvasWidth - padding * 2;
+
+        let currentX = padding;
+        let currentY = padding;
+        let rowHeight = 0;
+
+        images.forEach((img) => {
+          const imgWidth = img.getScaledWidth();
+          const imgHeight = img.getScaledHeight();
+
+          if (currentX + imgWidth + gap > canvasWidth - padding) {
+            currentX = padding;
+            currentY += rowHeight + gap;
+            rowHeight = 0;
           }
-          const left = padding + col * cellWidth + (cellWidth - img.getScaledWidth()) / 2;
-          const top = padding + row * cellHeight + (cellHeight - img.getScaledHeight()) / 2;
-          img.set({ left, top });
+
+          img.set({
+            left: currentX + imgWidth / 2,
+            top: currentY + imgHeight / 2,
+            originX: 'center',
+            originY: 'center'
+          });
           img.setCoords();
+
+          currentX += imgWidth + gap;
+          rowHeight = Math.max(rowHeight, imgHeight);
         });
+
         canvas.discardActiveObject();
         canvas.renderAll();
         saveHistory();
