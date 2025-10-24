@@ -659,6 +659,30 @@
     </div>
   </div>
 
+  <div class="text-panel" id="exportPanel" hidden>
+    <div class="text-dialog" role="dialog" aria-modal="true" aria-labelledby="exportDialogTitle">
+      <h2 id="exportDialogTitle">选择导出尺寸</h2>
+      <p style="margin:0;color:var(--text-muted);font-size:0.9rem;">选择合适的缩放比例来优化导出文件大小。</p>
+      <div style="display:grid;gap:10px;margin:16px 0;">
+        <button type="button" class="flat-button export-size-btn" data-multiplier="1" style="padding:12px;text-align:left;">
+          <div style="font-weight:600;">标准 (1x)</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">文件最小，适合网络分享</div>
+        </button>
+        <button type="button" class="flat-button export-size-btn" data-multiplier="1.5" style="padding:12px;text-align:left;">
+          <div style="font-weight:600;">高清 (1.5x)</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">平衡质量和文件大小</div>
+        </button>
+        <button type="button" class="flat-button export-size-btn" data-multiplier="2" style="padding:12px;text-align:left;">
+          <div style="font-weight:600;">超清 (2x)</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">最高质量，文件最大</div>
+        </button>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="flat-button" data-action="cancel-export">取消</button>
+      </div>
+    </div>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js" integrity="sha256-SPjwkVvrUS/H/htIwO6wdd0IA8eQ79/XXNAH+cPuoso=" crossorigin="anonymous"></script>
@@ -672,9 +696,12 @@
       const imageInput = document.getElementById('imageInput');
       const textPanel = document.getElementById('textPanel');
       const textInput = document.getElementById('textInput');
+      const exportPanel = document.getElementById('exportPanel');
       const toast = document.getElementById('toast');
       const heroFocusBtn = document.querySelector('[data-action="focus-board"]');
       const heroFullscreenBtn = document.querySelector('[data-action="enter-fullscreen"]');
+      
+      let pendingExportMultiplier = 1;
 
       const canvas = new fabric.Canvas(canvasElement, {
         backgroundColor: '#ffffff',
@@ -1141,7 +1168,15 @@
         };
       }
 
-      function exportCanvas() {
+      function openExportDialog() {
+        exportPanel.hidden = false;
+      }
+
+      function closeExportDialog() {
+        exportPanel.hidden = true;
+      }
+
+      function performExport(multiplier) {
         const objects = canvas.getObjects();
         if (!objects.length) {
           showToast('画布为空，无可导出的内容');
@@ -1151,7 +1186,7 @@
         const bounds = getContentBounds();
         const exportOptions = {
           format: 'png',
-          multiplier: 2,
+          multiplier: multiplier,
           enableRetinaScaling: true
         };
         
@@ -1167,7 +1202,12 @@
         link.download = `webimagine-${Date.now()}.png`;
         link.href = dataUrl;
         link.click();
+        closeExportDialog();
         showToast('PNG 导出完成');
+      }
+
+      function exportCanvas() {
+        openExportDialog();
       }
 
       function duplicateObject() {
@@ -1245,6 +1285,21 @@
       textPanel.addEventListener('click', (event) => {
         if (event.target === textPanel) {
           closeTextDialog();
+        }
+      });
+
+      document.querySelectorAll('.export-size-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const multiplier = parseFloat(btn.dataset.multiplier);
+          performExport(multiplier);
+        });
+      });
+
+      document.querySelector('[data-action="cancel-export"]').addEventListener('click', () => closeExportDialog());
+
+      exportPanel.addEventListener('click', (event) => {
+        if (event.target === exportPanel) {
+          closeExportDialog();
         }
       });
 
