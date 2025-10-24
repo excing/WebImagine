@@ -242,6 +242,15 @@
       transition: background 120ms ease, transform 120ms ease, box-shadow 150ms ease;
     }
 
+    .btn-icon {
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .btn-text {
+      white-space: nowrap;
+    }
+
     .tool-button:disabled,
     .action-button:disabled {
       opacity: 0.45;
@@ -598,6 +607,21 @@
         display: inline-flex;
       }
 
+      .toolbar-row.tools .btn-text {
+        display: none;
+      }
+
+      .toolbar-row.tools .tool-button,
+      .toolbar-row.tools .action-button {
+        padding: 0 10px;
+        min-width: 36px;
+        justify-content: center;
+      }
+
+      .toolbar-row.tools .btn-icon {
+        font-size: 1.2rem;
+      }
+
       .control input[type="range"] {
         width: 110px;
       }
@@ -646,11 +670,11 @@
       <div class="board-shell" id="boardShell" aria-label="交互画板">
         <div class="board-toolbar" role="toolbar" aria-label="画板工具栏">
           <div class="toolbar-row tools">
-            <button class="tool-button active" type="button" data-tool="pointer">选择</button>
-            <button class="tool-button" type="button" data-tool="brush">画笔</button>
-            <button class="tool-button" type="button" data-action="text">文字</button>
-            <button class="tool-button" type="button" data-tool="eraser">橡皮擦</button>
-            <button class="action-button mobile-menu-toggle" type="button" data-action="toggle-menu" aria-label="更多操作">☰ 更多</button>
+            <button class="tool-button active" type="button" data-tool="pointer"><span class="btn-icon" style="padding-bottom: 4px;">⌖</span><span class="btn-text">选择</span></button>
+            <button class="tool-button" type="button" data-tool="brush"><span class="btn-icon">✏️</span><span class="btn-text">画笔</span></button>
+            <button class="tool-button" type="button" data-action="text"><span class="btn-icon">T</span><span class="btn-text">文字</span></button>
+            <button class="tool-button" type="button" data-tool="eraser"><span class="btn-icon">◻️</span><span class="btn-text">橡皮擦</span></button>
+            <button class="action-button mobile-menu-toggle" type="button" data-action="toggle-menu" aria-label="更多操作"><span class="btn-icon">☰</span><span class="btn-text">更多</span></button>
           </div>
           <div class="toolbar-row">
             <label class="control" title="画布宽度">
@@ -664,7 +688,7 @@
             <button class="action-button" type="button" data-action="auto-fit" aria-label="自动调整画布大小" title="根据容器大小自动调整画布尺寸">自动调整</button>
             <label class="control" title="画笔颜色">
               <span>颜色</span>
-              <input type="color" value="#2563eb" id="colorPicker" aria-label="画笔颜色" />
+              <input type="color" value="#ef4444" id="colorPicker" aria-label="画笔颜色" />
             </label>
             <label class="control" title="画笔粗细">
               <span>粗细</span>
@@ -708,7 +732,7 @@
               <div class="mobile-menu-items">
                 <label class="control" title="画笔颜色">
                   <span>颜色</span>
-                  <input type="color" value="#2563eb" id="colorPickerMobile" aria-label="画笔颜色" />
+                  <input type="color" value="#ef4444" id="colorPickerMobile" aria-label="画笔颜色" />
                 </label>
                 <label class="control" title="画笔粗细">
                   <span>粗细</span>
@@ -1096,9 +1120,9 @@
         const activeObject = canvas.getActiveObject();
         if (!activeObject) return;
         if (activeObject.type === 'textbox') {
-          colorPicker.value = hexFromColor(activeObject.fill || '#2563eb');
+          colorPicker.value = hexFromColor(activeObject.fill || '#ef4444');
         } else if (activeObject.type === 'path') {
-          colorPicker.value = hexFromColor(activeObject.stroke || '#2563eb');
+          colorPicker.value = hexFromColor(activeObject.stroke || '#ef4444');
         }
       }
 
