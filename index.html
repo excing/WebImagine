@@ -288,7 +288,7 @@
 
     .control input[type="number"] {
       border: none;
-      width: 50px;
+      width: 55px;
       padding: 4px 6px;
       background: rgba(148, 163, 184, 0.1);
       color: var(--text);
@@ -300,6 +300,11 @@
     .control input[type="number"]:focus {
       outline: 2px solid rgba(37, 99, 235, 0.3);
       background: rgba(37, 99, 235, 0.05);
+    }
+
+    .control input[type="number"]::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
     }
 
     .arrange-control {
@@ -354,6 +359,10 @@
       justify-content: flex-start;
       overflow: auto;
       padding: 16px;
+    }
+
+    .board-stage-inner {
+      position: relative;
     }
 
     canvas#board {
@@ -588,6 +597,14 @@
             <button class="tool-button" type="button" data-tool="eraser">橡皮擦</button>
           </div>
           <div class="toolbar-row">
+            <label class="control" title="画布宽度">
+              <span>宽</span>
+              <input type="number" min="240" value="0" id="canvasWidth" aria-label="画布宽度" placeholder="auto" />
+            </label>
+            <label class="control" title="画布高度">
+              <span>高</span>
+              <input type="number" min="240" value="0" id="canvasHeight" aria-label="画布高度" placeholder="auto" />
+            </label>
             <label class="control" title="画笔颜色">
               <span>颜色</span>
               <input type="color" value="#2563eb" id="colorPicker" aria-label="画笔颜色" />
@@ -616,8 +633,10 @@
           </div>
         </div>
         <div class="board-stage" id="boardStage">
-          <canvas id="board" role="img" aria-label="绘图画布"></canvas>
-          <div class="drop-hint" id="dropHint">拖拽图片到这里，自动导入并排版</div>
+          <div class="board-stage-inner">
+            <canvas id="board" role="img" aria-label="绘图画布"></canvas>
+            <div class="drop-hint" id="dropHint">拖拽图片到这里，自动导入并排版</div>
+          </div>
         </div>
       </div>
     </section>
@@ -754,17 +773,48 @@
       }
 
       function resizeCanvas() {
-        const rect = boardStage.getBoundingClientRect();
-        const width = Math.max(rect.width - 32, 240);
-        const height = Math.max(rect.height - 32, 240);
+        const canvasWidthInput = document.getElementById('canvasWidth');
+        const canvasHeightInput = document.getElementById('canvasHeight');
+        
+        let width, height;
+        
+        if (canvasWidthInput.value === '' || canvasWidthInput.value === '0') {
+          const rect = boardStage.getBoundingClientRect();
+          width = Math.max(rect.width - 32, 240);
+        } else {
+          width = Math.max(parseInt(canvasWidthInput.value, 10), 240);
+        }
+        
+        if (canvasHeightInput.value === '' || canvasHeightInput.value === '0') {
+          const rect = boardStage.getBoundingClientRect();
+          height = Math.max(rect.height - 32, 240);
+        } else {
+          height = Math.max(parseInt(canvasHeightInput.value, 10), 240);
+        }
+        
         canvas.setWidth(width);
         canvas.setHeight(height);
         canvas.calcOffset();
         canvas.renderAll();
       }
 
+      function updateCanvasSizeDisplay() {
+        const canvasWidthInput = document.getElementById('canvasWidth');
+        const canvasHeightInput = document.getElementById('canvasHeight');
+        
+        if (canvasWidthInput.value === '' || canvasWidthInput.value === '0') {
+          canvasWidthInput.placeholder = Math.round(canvas.getWidth()).toString();
+          canvasWidthInput.value = Math.round(canvas.getWidth());
+        }
+        if (canvasHeightInput.value === '' || canvasHeightInput.value === '0') {
+          canvasHeightInput.placeholder = Math.round(canvas.getHeight()).toString();
+          canvasHeightInput.value = Math.round(canvas.getHeight());
+        }
+      }
+
       window.addEventListener('resize', () => requestAnimationFrame(resizeCanvas));
       resizeCanvas();
+      updateCanvasSizeDisplay();
 
       function showToast(message) {
         if (!toast) return;
@@ -794,6 +844,7 @@
           canvas.renderAll();
           history.isRestoring = false;
           updateHistoryButtons();
+          updateCanvasSizeDisplay();
         });
       }
 
@@ -967,6 +1018,7 @@
         const gapX = parseInt(document.getElementById('gapX').value, 10);
         const rows = parseInt(document.getElementById('gapY').value, 10);
         const canvasWidth = canvas.getWidth();
+        const canvasHeight = canvas.getHeight();
 
         if (rows === 0 || rows === 1) {
           // 自动换行模式
@@ -1040,27 +1092,6 @@
             });
             img.setCoords();
           });
-        }
-
-        // 计算排列后所有图片的边界
-        let maxRight = 0;
-        let maxBottom = 0;
-
-        images.forEach((img) => {
-          const right = img.left + img.getScaledWidth() / 2;
-          const bottom = img.top + img.getScaledHeight() / 2;
-          maxRight = Math.max(maxRight, right);
-          maxBottom = Math.max(maxBottom, bottom);
-        });
-
-        // 如果超出画布，则扩大画布大小
-        const requiredWidth = Math.max(canvas.getWidth(), maxRight + padding);
-        const requiredHeight = Math.max(canvas.getHeight(), maxBottom + padding);
-
-        if (requiredWidth > canvas.getWidth() || requiredHeight > canvas.getHeight()) {
-          canvas.setWidth(requiredWidth);
-          canvas.setHeight(requiredHeight);
-          canvas.calcOffset();
         }
 
         canvas.discardActiveObject();
@@ -1183,6 +1214,14 @@
 
       brushSizeInput.addEventListener('input', () => {
         ensureBrushSettings();
+      });
+
+      document.getElementById('canvasWidth').addEventListener('input', () => {
+        resizeCanvas();
+      });
+
+      document.getElementById('canvasHeight').addEventListener('input', () => {
+        resizeCanvas();
       });
 
       boardStage.addEventListener('dragover', (event) => {
