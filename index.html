@@ -39,6 +39,7 @@
       --text: #0f172a;
       --text-muted: #475569;
       --surface: rgba(255, 255, 255, 0.9);
+      --board-stage-height: 65vh;
       font-family: "Inter", "HarmonyOS Sans", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg-base);
     }
@@ -351,8 +352,8 @@
 
     .board-stage {
       position: relative;
-      flex: 1;
-      min-height: clamp(320px, 65vh, 640px);
+      flex: none;
+      height: var(--board-stage-height);
       background: repeating-linear-gradient(45deg, #f8fafc 0, #f8fafc 12px, #eef2ff 12px, #eef2ff 24px);
       display: flex;
       align-items: flex-start;
@@ -812,9 +813,26 @@
         }
       }
 
-      window.addEventListener('resize', () => requestAnimationFrame(resizeCanvas));
+      function updateBoardStageHeight() {
+        const boardToolbar = document.querySelector('.board-toolbar');
+        const toolbarHeight = boardToolbar.offsetHeight;
+        const shellHeight = boardShell.offsetHeight;
+        const availableHeight = shellHeight - toolbarHeight;
+        const minHeight = 320;
+        const finalHeight = Math.max(availableHeight, minHeight);
+        document.documentElement.style.setProperty('--board-stage-height', `${finalHeight}px`);
+      }
+
+      window.addEventListener('resize', () => {
+        requestAnimationFrame(resizeCanvas);
+        requestAnimationFrame(updateBoardStageHeight);
+      });
+      document.addEventListener('fullscreenchange', updateBoardStageHeight);
+      boardShell.addEventListener('fullscreenchange', updateBoardStageHeight);
+      
       resizeCanvas();
       updateCanvasSizeDisplay();
+      updateBoardStageHeight();
 
       function showToast(message) {
         if (!toast) return;
