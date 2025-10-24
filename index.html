@@ -509,6 +509,51 @@
       transform: translate(-50%, 0);
     }
 
+    .mobile-menu-toggle {
+      display: none;
+    }
+
+    .mobile-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--bg-toolbar);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid var(--bg-toolbar-border);
+      padding: 16px;
+      z-index: 10;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+    }
+
+    .mobile-dropdown-menu.show {
+      display: block;
+    }
+
+    .mobile-menu-section {
+      margin-bottom: 16px;
+    }
+
+    .mobile-menu-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .mobile-menu-section h3 {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin: 0 0 8px 0;
+      font-weight: 600;
+    }
+
+    .mobile-menu-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
     @media (max-width: 1080px) {
       .hero {
         grid-template-columns: 1fr;
@@ -538,10 +583,19 @@
       .board-toolbar {
         position: sticky;
         top: 0;
+        z-index: 20;
       }
 
       .toolbar-row {
         gap: 8px;
+      }
+
+      .toolbar-row:not(.tools) {
+        display: none;
+      }
+
+      .mobile-menu-toggle {
+        display: inline-flex;
       }
 
       .control input[type="range"] {
@@ -596,6 +650,7 @@
             <button class="tool-button" type="button" data-tool="brush">画笔</button>
             <button class="tool-button" type="button" data-action="text">文字</button>
             <button class="tool-button" type="button" data-tool="eraser">橡皮擦</button>
+            <button class="action-button mobile-menu-toggle" type="button" data-action="toggle-menu" aria-label="更多操作">☰ 更多</button>
           </div>
           <div class="toolbar-row">
             <label class="control" title="画布宽度">
@@ -632,6 +687,60 @@
             <button class="action-button" type="button" data-action="export">导出 PNG</button>
             <button class="action-button" type="button" data-action="fullscreen">全屏专注</button>
             <button class="action-button" type="button" data-action="reset">清空画布</button>
+          </div>
+          <div class="mobile-dropdown-menu" id="mobileMenu">
+            <div class="mobile-menu-section">
+              <h3>画布设置</h3>
+              <div class="mobile-menu-items">
+                <label class="control" title="画布宽度">
+                  <span>宽</span>
+                  <input type="number" min="240" value="0" id="canvasWidthMobile" aria-label="画布宽度" placeholder="auto" />
+                </label>
+                <label class="control" title="画布高度">
+                  <span>高</span>
+                  <input type="number" min="240" value="0" id="canvasHeightMobile" aria-label="画布高度" placeholder="auto" />
+                </label>
+                <button class="action-button" type="button" data-action="auto-fit-mobile">自动调整</button>
+              </div>
+            </div>
+            <div class="mobile-menu-section">
+              <h3>画笔设置</h3>
+              <div class="mobile-menu-items">
+                <label class="control" title="画笔颜色">
+                  <span>颜色</span>
+                  <input type="color" value="#2563eb" id="colorPickerMobile" aria-label="画笔颜色" />
+                </label>
+                <label class="control" title="画笔粗细">
+                  <span>粗细</span>
+                  <input type="range" min="1" max="60" value="8" id="brushSizeMobile" aria-label="画笔粗细" />
+                </label>
+              </div>
+            </div>
+            <div class="mobile-menu-section">
+              <h3>操作</h3>
+              <div class="mobile-menu-items">
+                <button class="action-button" type="button" data-action="toggle-snap-mobile">吸附</button>
+                <button class="action-button" type="button" data-action="undo-mobile">撤销</button>
+                <button class="action-button" type="button" data-action="redo-mobile">恢复</button>
+                <label class="action-button" for="imageInputMobile" role="button" tabindex="0">导入图片
+                  <input type="file" id="imageInputMobile" accept="image/*" multiple hidden>
+                </label>
+                <button class="action-button" type="button" data-action="duplicate-mobile">复制图层</button>
+              </div>
+            </div>
+            <div class="mobile-menu-section">
+              <h3>排列与导出</h3>
+              <div class="mobile-menu-items" style="margin-bottom: 8px;">
+                <input type="number" min="0" max="100" value="0" id="gapXMobile" aria-label="排列X间距" placeholder="X间距" title="图片水平间距" style="width: 70px; padding: 8px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 8px;" />
+                <input type="number" min="0" max="100" value="0" id="gapYMobile" aria-label="排列Y间距" placeholder="Y间距" title="图片垂直间距" style="width: 70px; padding: 8px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 8px;" />
+                <button class="action-button" type="button" data-action="arrange-mobile">自动排列</button>
+              </div>
+              <div class="mobile-menu-items">
+                <button class="action-button" type="button" data-action="export-mobile">导出 PNG</button>
+                <button class="action-button" type="button" data-action="fullscreen-mobile">全屏专注</button>
+                <button class="action-button" type="button" data-action="reset-mobile">清空画布</button>
+              </div>
+            </div>
           </div>
         </div>
         <div class="board-stage" id="boardStage">
@@ -701,6 +810,14 @@
       const toast = document.getElementById('toast');
       const heroFocusBtn = document.querySelector('[data-action="focus-board"]');
       const heroFullscreenBtn = document.querySelector('[data-action="enter-fullscreen"]');
+      const mobileMenu = document.getElementById('mobileMenu');
+      
+      // Mobile controls
+      const colorPickerMobile = document.getElementById('colorPickerMobile');
+      const brushSizeMobile = document.getElementById('brushSizeMobile');
+      const canvasWidthMobile = document.getElementById('canvasWidthMobile');
+      const canvasHeightMobile = document.getElementById('canvasHeightMobile');
+      const imageInputMobile = document.getElementById('imageInputMobile');
       
       let pendingExportMultiplier = 1;
 
@@ -1274,6 +1391,28 @@
         showToast('画布已自动调整至容器大小');
       }
 
+      function toggleMobileMenu() {
+        mobileMenu.classList.toggle('show');
+      }
+
+      function syncMobileControls() {
+        if (colorPickerMobile) colorPickerMobile.value = colorPicker.value;
+        if (brushSizeMobile) brushSizeMobile.value = brushSizeInput.value;
+        if (canvasWidthMobile) canvasWidthMobile.value = document.getElementById('canvasWidth').value;
+        if (canvasHeightMobile) canvasHeightMobile.value = document.getElementById('canvasHeight').value;
+        document.getElementById('gapXMobile').value = document.getElementById('gapX').value;
+        document.getElementById('gapYMobile').value = document.getElementById('gapY').value;
+      }
+
+      function syncDesktopControls() {
+        if (colorPickerMobile) colorPicker.value = colorPickerMobile.value;
+        if (brushSizeMobile) brushSizeInput.value = brushSizeMobile.value;
+        if (canvasWidthMobile) document.getElementById('canvasWidth').value = canvasWidthMobile.value;
+        if (canvasHeightMobile) document.getElementById('canvasHeight').value = canvasHeightMobile.value;
+        document.getElementById('gapX').value = document.getElementById('gapXMobile').value;
+        document.getElementById('gapY').value = document.getElementById('gapYMobile').value;
+      }
+
       document.getElementById('year').textContent = new Date().getFullYear();
 
       document.querySelectorAll('[data-tool]').forEach(button => {
@@ -1300,6 +1439,74 @@
       document.querySelector('[data-action="fullscreen"]').addEventListener('click', () => toggleFullscreen());
       document.querySelector('[data-action="reset"]').addEventListener('click', () => resetCanvas());
       document.querySelector('[data-action="auto-fit"]').addEventListener('click', () => autoFitCanvas());
+      
+      // Mobile menu toggle
+      document.querySelector('[data-action="toggle-menu"]')?.addEventListener('click', () => {
+        toggleMobileMenu();
+        if (mobileMenu.classList.contains('show')) {
+          syncMobileControls();
+        }
+      });
+      
+      // Mobile menu event listeners
+      document.querySelector('[data-action="toggle-snap-mobile"]')?.addEventListener('click', (e) => {
+        snapEnabled = !snapEnabled;
+        e.target.classList.toggle('active', snapEnabled);
+        document.querySelector('[data-action="toggle-snap"]')?.classList.toggle('active', snapEnabled);
+        showToast(snapEnabled ? '吸附已启用' : '吸附已禁用');
+      });
+      
+      document.querySelector('[data-action="undo-mobile"]')?.addEventListener('click', () => undo());
+      document.querySelector('[data-action="redo-mobile"]')?.addEventListener('click', () => redo());
+      document.querySelector('[data-action="arrange-mobile"]')?.addEventListener('click', () => {
+        syncDesktopControls();
+        autoArrangeImages();
+      });
+      document.querySelector('[data-action="export-mobile"]')?.addEventListener('click', () => exportCanvas());
+      document.querySelector('[data-action="duplicate-mobile"]')?.addEventListener('click', () => duplicateObject());
+      document.querySelector('[data-action="fullscreen-mobile"]')?.addEventListener('click', () => toggleFullscreen());
+      document.querySelector('[data-action="reset-mobile"]')?.addEventListener('click', () => resetCanvas());
+      document.querySelector('[data-action="auto-fit-mobile"]')?.addEventListener('click', () => {
+        syncDesktopControls();
+        resizeCanvas();
+      });
+      
+      // Sync mobile controls with desktop
+      colorPickerMobile?.addEventListener('input', () => {
+        colorPicker.value = colorPickerMobile.value;
+        ensureBrushSettings();
+        const activeObject = canvas.getActiveObject();
+        if (activeObject) {
+          if (activeObject.type === 'textbox') {
+            activeObject.set('fill', colorPicker.value);
+            canvas.renderAll();
+            saveHistory();
+          } else if (activeObject.type === 'path') {
+            activeObject.set('stroke', colorPicker.value);
+            canvas.renderAll();
+            saveHistory();
+          }
+        }
+      });
+      
+      brushSizeMobile?.addEventListener('input', () => {
+        brushSizeInput.value = brushSizeMobile.value;
+        ensureBrushSettings();
+      });
+      
+      canvasWidthMobile?.addEventListener('input', () => {
+        document.getElementById('canvasWidth').value = canvasWidthMobile.value;
+      });
+      
+      canvasHeightMobile?.addEventListener('input', () => {
+        document.getElementById('canvasHeight').value = canvasHeightMobile.value;
+      });
+      
+      imageInputMobile?.addEventListener('change', (event) => {
+        handleFiles(event.target.files);
+        imageInputMobile.value = '';
+        mobileMenu.classList.remove('show');
+      });
 
       heroFocusBtn?.addEventListener('click', () => {
         boardShell.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1410,6 +1617,20 @@
         }
         if (event.key === 'Escape' && !textPanel.hidden) {
           closeTextDialog();
+        }
+        if (event.key === 'Escape' && mobileMenu?.classList.contains('show')) {
+          mobileMenu.classList.remove('show');
+        }
+      });
+      
+      // Close mobile menu when clicking outside
+      document.addEventListener('click', (event) => {
+        if (mobileMenu?.classList.contains('show')) {
+          const isMenuClick = mobileMenu.contains(event.target);
+          const isToggleClick = event.target.closest('[data-action="toggle-menu"]');
+          if (!isMenuClick && !isToggleClick) {
+            mobileMenu.classList.remove('show');
+          }
         }
       });
 
