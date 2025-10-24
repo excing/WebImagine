@@ -1118,12 +1118,51 @@
         showToast('图片已自动排列');
       }
 
+      function getContentBounds() {
+        const objects = canvas.getObjects();
+        if (!objects.length) return null;
+        
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        
+        objects.forEach(obj => {
+          const bounds = obj.getBoundingRect();
+          minX = Math.min(minX, bounds.left);
+          minY = Math.min(minY, bounds.top);
+          maxX = Math.max(maxX, bounds.left + bounds.width);
+          maxY = Math.max(maxY, bounds.top + bounds.height);
+        });
+        
+        const padding = 8;
+        return {
+          left: Math.max(0, minX - padding),
+          top: Math.max(0, minY - padding),
+          width: Math.min(canvas.getWidth(), maxX - minX + padding * 2),
+          height: Math.min(canvas.getHeight(), maxY - minY + padding * 2)
+        };
+      }
+
       function exportCanvas() {
-        if (!canvas.getObjects().length) {
+        const objects = canvas.getObjects();
+        if (!objects.length) {
           showToast('画布为空，无可导出的内容');
           return;
         }
-        const dataUrl = canvas.toDataURL({ format: 'png', multiplier: 2, enableRetinaScaling: true });
+        
+        const bounds = getContentBounds();
+        const exportOptions = {
+          format: 'png',
+          multiplier: 2,
+          enableRetinaScaling: true
+        };
+        
+        if (bounds) {
+          exportOptions.left = bounds.left;
+          exportOptions.top = bounds.top;
+          exportOptions.width = bounds.width;
+          exportOptions.height = bounds.height;
+        }
+        
+        const dataUrl = canvas.toDataURL(exportOptions);
         const link = document.createElement('a');
         link.download = `webimagine-${Date.now()}.png`;
         link.href = dataUrl;
