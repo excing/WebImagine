@@ -606,6 +606,7 @@
               <span>高</span>
               <input type="number" min="240" value="0" id="canvasHeight" aria-label="画布高度" placeholder="auto" />
             </label>
+            <button class="action-button" type="button" data-action="auto-fit" aria-label="自动调整画布大小" title="根据容器大小自动调整画布尺寸">自动调整</button>
             <label class="control" title="画笔颜色">
               <span>颜色</span>
               <input type="color" value="#2563eb" id="colorPicker" aria-label="画笔颜色" />
@@ -1256,6 +1257,23 @@
         showToast('画布已清空');
       }
 
+      function autoFitCanvas() {
+        const stageRect = boardStage.getBoundingClientRect();
+        const padding = 32;
+        const newWidth = Math.max(stageRect.width - padding, 240);
+        const newHeight = Math.max(stageRect.height - padding, 240);
+        
+        canvas.setWidth(newWidth);
+        canvas.setHeight(newHeight);
+        canvas.calcOffset();
+        canvas.renderAll();
+        
+        document.getElementById('canvasWidth').value = Math.round(newWidth);
+        document.getElementById('canvasHeight').value = Math.round(newHeight);
+        
+        showToast('画布已自动调整至容器大小');
+      }
+
       document.getElementById('year').textContent = new Date().getFullYear();
 
       document.querySelectorAll('[data-tool]').forEach(button => {
@@ -1281,6 +1299,7 @@
       document.querySelector('[data-action="duplicate"]').addEventListener('click', () => duplicateObject());
       document.querySelector('[data-action="fullscreen"]').addEventListener('click', () => toggleFullscreen());
       document.querySelector('[data-action="reset"]').addEventListener('click', () => resetCanvas());
+      document.querySelector('[data-action="auto-fit"]').addEventListener('click', () => autoFitCanvas());
 
       heroFocusBtn?.addEventListener('click', () => {
         boardShell.scrollIntoView({ behavior: 'smooth', block: 'center' });
