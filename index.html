@@ -693,6 +693,7 @@
             <label class="control" title="画笔粗细">
               <span>粗细</span>
               <input type="range" min="1" max="60" value="8" id="brushSize" aria-label="画笔粗细" />
+              <input type="number" min="1" max="60" value="8" id="brushSizeNumber" aria-label="画笔粗细数值" />
             </label>
             <button class="action-button" type="button" data-action="toggle-snap" aria-label="启用/禁用吸附对齐" title="启用吸附功能后，移动对象时会自动对齐到网格或其他对象">吸附</button>
             <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
@@ -737,6 +738,7 @@
                 <label class="control" title="画笔粗细">
                   <span>粗细</span>
                   <input type="range" min="1" max="60" value="8" id="brushSizeMobile" aria-label="画笔粗细" />
+                  <input type="number" min="1" max="60" value="8" id="brushSizeNumberMobile" aria-label="画笔粗细数值" />
                 </label>
               </div>
             </div>
@@ -842,6 +844,10 @@
       const canvasWidthMobile = document.getElementById('canvasWidthMobile');
       const canvasHeightMobile = document.getElementById('canvasHeightMobile');
       const imageInputMobile = document.getElementById('imageInputMobile');
+      
+      // Brush size number inputs
+      const brushSizeNumber = document.getElementById('brushSizeNumber');
+      const brushSizeNumberMobile = document.getElementById('brushSizeNumberMobile');
       
       let pendingExportMultiplier = 1;
 
@@ -1422,6 +1428,7 @@
       function syncMobileControls() {
         if (colorPickerMobile) colorPickerMobile.value = colorPicker.value;
         if (brushSizeMobile) brushSizeMobile.value = brushSizeInput.value;
+        if (brushSizeNumberMobile) brushSizeNumberMobile.value = brushSizeNumber.value;
         if (canvasWidthMobile) canvasWidthMobile.value = document.getElementById('canvasWidth').value;
         if (canvasHeightMobile) canvasHeightMobile.value = document.getElementById('canvasHeight').value;
         document.getElementById('gapXMobile').value = document.getElementById('gapX').value;
@@ -1431,6 +1438,7 @@
       function syncDesktopControls() {
         if (colorPickerMobile) colorPicker.value = colorPickerMobile.value;
         if (brushSizeMobile) brushSizeInput.value = brushSizeMobile.value;
+        if (brushSizeNumberMobile) brushSizeNumber.value = brushSizeNumberMobile.value;
         if (canvasWidthMobile) document.getElementById('canvasWidth').value = canvasWidthMobile.value;
         if (canvasHeightMobile) document.getElementById('canvasHeight').value = canvasHeightMobile.value;
         document.getElementById('gapX').value = document.getElementById('gapXMobile').value;
@@ -1515,6 +1523,17 @@
       
       brushSizeMobile?.addEventListener('input', () => {
         brushSizeInput.value = brushSizeMobile.value;
+        brushSizeNumber.value = brushSizeMobile.value;
+        brushSizeNumberMobile.value = brushSizeMobile.value;
+        ensureBrushSettings();
+      });
+
+      brushSizeNumberMobile?.addEventListener('input', () => {
+        const value = Math.max(1, Math.min(60, parseInt(brushSizeNumberMobile.value, 10) || 8));
+        brushSizeNumberMobile.value = value;
+        brushSizeMobile.value = value;
+        brushSizeInput.value = value;
+        brushSizeNumber.value = value;
         ensureBrushSettings();
       });
       
@@ -1584,6 +1603,14 @@
       });
 
       brushSizeInput.addEventListener('input', () => {
+        brushSizeNumber.value = brushSizeInput.value;
+        ensureBrushSettings();
+      });
+
+      brushSizeNumber.addEventListener('input', () => {
+        const value = Math.max(1, Math.min(60, parseInt(brushSizeNumber.value, 10) || 8));
+        brushSizeNumber.value = value;
+        brushSizeInput.value = value;
         ensureBrushSettings();
       });
 
