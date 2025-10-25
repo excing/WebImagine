@@ -2052,6 +2052,15 @@
       let dragStart = { x: 0, y: 0 };
       let panMode = false;
 
+      // Pinch-zoom state
+      let isPinching = false;
+      let pinchStartDist = 0;
+      let pinchStartZoom = 1;
+      let pinchCenter = null;
+      let savedDrawingMode = false;
+      let savedSkipTargetFind = false;
+      let savedSelection = true;
+
       function getClientPoint(evt) {
         if (evt && evt.touches && evt.touches.length) {
           return { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
@@ -2061,6 +2070,89 @@
         }
         return { x: evt?.clientX ?? 0, y: evt?.clientY ?? 0 };
       }
+
+      // Pinch-zoom helpers
+      function getTouchPair(evt) {
+        const t = evt && evt.touches;
+        const c = evt && evt.changedTouches;
+        if (t && t.length >= 2) return [t[0], t[1]];
+        if (c && c.length >= 2) return [c[0], c[1]];
+        return null;
+      }
+      function touchDistance(a, b) {
+        const dx = a.clientX - b.clientX;
+        const dy = a.clientY - b.clientY;
+        return Math.hypot(dx, dy) || 0;
+      }
+      function touchMidpoint(a, b) {
+        return { x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 };
+      }
+      function clientToCanvasPoint(c) {
+        const rect = canvas.upperCanvasEl.getBoundingClientRect();
+        return new fabric.Point(c.x - rect.left, c.y - rect.top);
+      }
+
+      // Early DOM interception to avoid Fabric selection during pinch
+      const upperEl = canvas.upperCanvasEl;
+      upperEl.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length === 2) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          isPinching = true;
+          pinchStartDist = touchDistance(e.touches[0], e.touches[1]);
+          pinchStartZoom = canvas.getZoom() || 1;
+          const mid = touchMidpoint(e.touches[0], e.touches[1]);
+          pinchCenter = clientToCanvasPoint(mid);
+          savedDrawingMode = canvas.isDrawingMode;
+          savedSkipTargetFind = canvas.skipTargetFind;
+          savedSelection = canvas.selection;
+          canvas.isDrawingMode = false;
+          canvas.skipTargetFind = true;
+          canvas.selection = false;
+          canvas.discardActiveObject();
+          canvas.defaultCursor = 'grabbing';
+          canvas.requestRenderAll();
+        }
+      }, { passive: false, capture: true });
+
+      upperEl.addEventListener('touchmove', (e) => {
+        if (!isPinching || !(e.touches && e.touches.length === 2)) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const d = touchDistance(e.touches[0], e.touches[1]);
+        const ratio = d / (pinchStartDist || 1);
+        const z = clampZoom((pinchStartZoom || 1) * (isFinite(ratio) ? ratio : 1));
+        const mid = touchMidpoint(e.touches[0], e.touches[1]);
+        pinchCenter = clientToCanvasPoint(mid);
+        canvas.zoomToPoint(pinchCenter, z);
+        canvas.requestRenderAll();
+        updateZoomInputs();
+      }, { passive: false, capture: true });
+
+      function endPinch() {
+        isPinching = false;
+        canvas.skipTargetFind = savedSkipTargetFind;
+        canvas.selection = savedSelection;
+        canvas.isDrawingMode = savedDrawingMode;
+        canvas.defaultCursor = panMode ? 'grab' : 'default';
+        canvas.requestRenderAll();
+      }
+
+      upperEl.addEventListener('touchend', (e) => {
+        if (isPinching && (!e.touches || e.touches.length < 2)) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          endPinch();
+        }
+      }, { passive: false, capture: true });
+
+      upperEl.addEventListener('touchcancel', (e) => {
+        if (isPinching) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          endPinch();
+        }
+      }, { passive: false, capture: true });
 
       canvas.on('mouse:wheel', (opt) => {
         const e = opt.e;
@@ -2075,12 +2167,25 @@
         updateZoomInputs();
       });
 
-      // 画布拖动功能（支持鼠标与触摸）
+      // 画布拖动/缩放（支持鼠标与触摸）
       canvas.on('mouse:down', (opt) => {
         const e = opt.e;
+        if (isPinching) { e?.preventDefault?.(); return; }
+        const pair = getTouchPair(e);
+        if (pair) {
+          e?.preventDefault?.();
+          isPinching = true;
+          pinchStartDist = touchDistance(pair[0], pair[1]);
+          pinchStartZoom = canvas.getZoom() || 1;
+          const mid = touchMidpoint(pair[0], pair[1]);
+          pinchCenter = clientToCanvasPoint(mid);
+          canvas.selection = false;
+          canvas.defaultCursor = 'grabbing';
+          canvas.renderAll();
+          return;
+        }
         const isMiddleButton = e && e.button === 1;
-        const isTwoFinger = (e && e.touches && e.touches.length >= 2) || (e && e.changedTouches && e.changedTouches.length >= 2);
-        const allowPan = isMiddleButton || panMode || isTwoFinger;
+        const allowPan = isMiddleButton || panMode;
         if (allowPan) {
           e?.preventDefault?.();
           isDragging = true;
@@ -2093,8 +2198,23 @@
       });
 
       canvas.on('mouse:move', (opt) => {
-        if (!isDragging) return;
         const e = opt.e;
+        if (isPinching) {
+          const pair = getTouchPair(e);
+          if (pair) {
+            e?.preventDefault?.();
+            const d = touchDistance(pair[0], pair[1]);
+            const ratio = d / (pinchStartDist || 1);
+            const z = clampZoom((pinchStartZoom || 1) * (isFinite(ratio) ? ratio : 1));
+            const mid = touchMidpoint(pair[0], pair[1]);
+            pinchCenter = clientToCanvasPoint(mid);
+            canvas.zoomToPoint(pinchCenter, z);
+            canvas.requestRenderAll();
+            updateZoomInputs();
+            return;
+          }
+        }
+        if (!isDragging) return;
         const p = getClientPoint(e);
         const dx = p.x - dragStart.x;
         const dy = p.y - dragStart.y;
@@ -2108,6 +2228,9 @@
       });
 
       canvas.on('mouse:up', (opt) => {
+        if (isPinching) {
+          isPinching = false;
+        }
         if (isDragging) {
           isDragging = false;
           canvas.selection = true;
