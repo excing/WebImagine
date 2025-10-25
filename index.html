@@ -687,7 +687,7 @@
               <input type="number" min="240" value="0" id="canvasHeight" aria-label="画布高度" placeholder="auto" />
             </label>
             <button class="action-button" type="button" data-action="auto-fit" aria-label="自动调整画布大小" title="根据容器大小自动调整画布尺寸">自动调整</button>
-            <label class="control" title="缩放 (Ctrl/Cmd + 滚轮)">
+            <label class="control" title="缩放 (滚轮)">
               <span>缩放</span>
               <input type="range" min="10" max="400" value="100" id="zoomRange" aria-label="缩放" />
               <input type="number" min="10" max="400" value="100" id="zoomNumber" aria-label="缩放数值(%)" />
@@ -793,7 +793,7 @@
   </main>
   <footer>
     <span>© <span id="year"></span> WebImagine. 单文件纯前端应用。</span>
-    <span>快捷键：Ctrl/Cmd + Z 撤销 · Ctrl/Cmd + Shift + Z 恢复 · Delete 删除 · Ctrl/Cmd + D 复制 · 中键拖动/移动端双指拖动 移动画布</span>
+    <span>快捷键：Ctrl/Cmd + Z 撤销 · Ctrl/Cmd + Shift + Z 恢复 · Delete 删除 · Ctrl/Cmd + D 复制 · 鼠标滚轮缩放 · 中键拖动/移动端双指拖动 移动画布</span>
   </footer>
 
   <div class="text-panel" id="textPanel" hidden>
@@ -1831,7 +1831,6 @@
 
       canvas.on('mouse:wheel', (opt) => {
         const e = opt.e;
-        if (!(e.ctrlKey || e.metaKey)) return;
         e.preventDefault();
         e.stopPropagation();
         const delta = e.deltaY;
