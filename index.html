@@ -2093,53 +2093,73 @@
         }
       });
 
-      // 移动端触摸拖动功能
+      // 移动端触摸拖动功能 - 使用 Fabric.js 的 canvas 事件
       let touchDragging = false;
       let touchStart = { x: 0, y: 0 };
       let isTwoFingerTouch = false;
 
-      canvasElement.addEventListener('touchstart', (e) => {
-        // 双指触摸或 panMode 下的单指触摸用于拖动
-        if (e.changedTouches.length === 2) {
-          e.preventDefault();
-          isTwoFingerTouch = true;
-          touchDragging = true;
-          const touch = e.changedTouches[0];
-          touchStart = { x: touch.clientX, y: touch.clientY };
-          canvas.selection = false;
-        } else if (panMode && e.changedTouches.length === 1) {
-          e.preventDefault();
-          isTwoFingerTouch = false;
-          touchDragging = true;
-          const touch = e.changedTouches[0];
-          touchStart = { x: touch.clientX, y: touch.clientY };
-          canvas.selection = false;
-        } else {
-          isTwoFingerTouch = false;
-        }
-      }, { passive: false });
-
-      canvasElement.addEventListener('touchmove', (e) => {
-        alert('touchmove');
-        if (touchDragging && e.changedTouches.length > 0) {
-          const shouldProcess = (isTwoFingerTouch && e.changedTouches.length === 2) || (!isTwoFingerTouch && panMode && e.changedTouches.length === 1);
-          if (shouldProcess) {
-            e.preventDefault();
-            const touch = e.changedTouches[0];
-            const dx = touch.clientX - touchStart.x;
-            const dy = touch.clientY - touchStart.y;
+      canvas.on({
+        'touch:drag': function(e) {
+          if (panMode || isTwoFingerTouch) {
+            e.e.preventDefault();
+            touchDragging = true;
             
-            // 使用 viewportTransform 平移画布
-            const vpt = canvas.viewportTransform;
-            vpt[4] += dx;
-            vpt[5] += dy;
-            
-            touchStart = { x: touch.clientX, y: touch.clientY };
-            canvas.requestRenderAll();
+            const touches = e.e.changedTouches;
+            if (touches && touches.length > 0) {
+              const touch = touches[0];
+              const dx = touch.clientX - touchStart.x;
+              const dy = touch.clientY - touchStart.y;
+              
+              // 使用 viewportTransform 平移画布
+              const vpt = canvas.viewportTransform;
+              vpt[4] += dx;
+              vpt[5] += dy;
+              
+              touchStart = { x: touch.clientX, y: touch.clientY };
+              canvas.requestRenderAll();
+            }
           }
+        },
+        'touch:gesture': function(e) {
+          if (e.e && e.e.changedTouches && e.e.changedTouches.length === 2) {
+            isTwoFingerTouch = true;
+            touchDragging = true;
+            const touch = e.e.changedTouches[0];
+            touchStart = { x: touch.clientX, y: touch.clientY };
+            canvas.selection = false;
+          }
+        },
+        'touch:orientation': function(e) {
+          // 处理方向改变事件
+        },
+        'touch:shake': function(e) {
+          // 处理摇晃事件
+        },
+        'touch:longpress': function(e) {
+          // 处理长按事件
+        }
+      });
+
+      // 重写 panMode 切换时的初始化
+      const originalSetTool = setTool;
+      window.setToolWithPan = function(tool) {
+        originalSetTool.call(this, tool);
+        if (tool === 'pan') {
+          touchStart = { x: 0, y: 0 };
+          touchDragging = false;
+        }
+      };
+      
+      // 监听单指触摸开始（在 panMode 时）
+      canvasElement.addEventListener('touchstart', (e) => {
+        if (panMode && e.changedTouches.length === 1) {
+          const touch = e.changedTouches[0];
+          touchStart = { x: touch.clientX, y: touch.clientY };
+          canvas.selection = false;
         }
       }, { passive: false });
 
+      // 监听触摸结束
       canvasElement.addEventListener('touchend', (e) => {
         if (touchDragging) {
           touchDragging = false;
