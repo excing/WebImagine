@@ -2100,18 +2100,18 @@
 
       canvasElement.addEventListener('touchstart', (e) => {
         // 双指触摸或 panMode 下的单指触摸用于拖动
-        if (e.touches.length === 2) {
+        if (e.changedTouches.length === 2) {
           e.preventDefault();
           isTwoFingerTouch = true;
           touchDragging = true;
-          const touch = e.touches[0];
+          const touch = e.changedTouches[0];
           touchStart = { x: touch.clientX, y: touch.clientY };
           canvas.selection = false;
-        } else if (panMode && e.touches.length === 1) {
+        } else if (panMode && e.changedTouches.length === 1) {
           e.preventDefault();
           isTwoFingerTouch = false;
           touchDragging = true;
-          const touch = e.touches[0];
+          const touch = e.changedTouches[0];
           touchStart = { x: touch.clientX, y: touch.clientY };
           canvas.selection = false;
         } else {
@@ -2120,11 +2120,12 @@
       }, { passive: false });
 
       canvasElement.addEventListener('touchmove', (e) => {
-        if (touchDragging && e.touches.length > 0) {
-          const shouldProcess = (isTwoFingerTouch && e.touches.length === 2) || (!isTwoFingerTouch && panMode && e.touches.length === 1);
+        alert('touchmove');
+        if (touchDragging && e.changedTouches.length > 0) {
+          const shouldProcess = (isTwoFingerTouch && e.changedTouches.length === 2) || (!isTwoFingerTouch && panMode && e.changedTouches.length === 1);
           if (shouldProcess) {
             e.preventDefault();
-            const touch = e.touches[0];
+            const touch = e.changedTouches[0];
             const dx = touch.clientX - touchStart.x;
             const dy = touch.clientY - touchStart.y;
             
