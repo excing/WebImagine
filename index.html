@@ -409,6 +409,38 @@
       background: rgba(37, 99, 235, 0.08);
     }
 
+    .history-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .history-control .action-button {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      border-right: 1px solid rgba(148, 163, 184, 0.2);
+      height: 36px;
+      padding: 0 14px;
+    }
+
+    .history-control .action-button:last-child {
+      border-right: none;
+    }
+
+    .history-control .action-button:hover {
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    .history-control .action-button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
     .board-stage {
       position: relative;
       flex: none;
@@ -749,8 +781,11 @@
               <input type="number" min="1" max="60" value="8" id="brushSizeNumber" aria-label="画笔粗细数值" />
             </label>
             <button class="action-button" type="button" data-action="toggle-snap" aria-label="启用/禁用吸附对齐" title="启用吸附功能后，移动对象时会自动对齐到网格或其他对象">吸附</button>
-            <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
-            <button class="action-button" type="button" data-action="redo" aria-label="恢复 (Ctrl+Shift+Z)">恢复</button>
+            <div class="history-control" title="历史操作">
+              <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
+              <button class="action-button" type="button" data-action="redo" aria-label="恢复 (Ctrl+Shift+Z)">恢复</button>
+              <button class="action-button" type="button" data-action="reset" aria-label="清空画布">清空</button>
+            </div>
           </div>
           <div class="toolbar-row">
             <label class="action-button" for="imageInput" role="button" tabindex="0">导入图片
@@ -764,7 +799,6 @@
             </div>
             <button class="action-button" type="button" data-action="export">导出 PNG</button>
             <button class="action-button" type="button" data-action="fullscreen">全屏专注</button>
-            <button class="action-button" type="button" data-action="reset">清空画布</button>
           </div>
           <div class="mobile-dropdown-menu" id="mobileMenu">
             <div class="mobile-menu-section">
@@ -799,10 +833,13 @@
             </div>
             <div class="mobile-menu-section">
               <h3>操作</h3>
+              <div class="history-control" style="width: 100%; margin-bottom: 12px;">
+                <button class="action-button" type="button" data-action="undo-mobile" style="flex: 1; justify-content: center;">撤销</button>
+                <button class="action-button" type="button" data-action="redo-mobile" style="flex: 1; justify-content: center;">恢复</button>
+                <button class="action-button" type="button" data-action="reset-mobile" style="flex: 1; justify-content: center;">清空</button>
+              </div>
               <div class="mobile-menu-items">
                 <button class="action-button" type="button" data-action="toggle-snap-mobile">吸附</button>
-                <button class="action-button" type="button" data-action="undo-mobile">撤销</button>
-                <button class="action-button" type="button" data-action="redo-mobile">恢复</button>
                 <label class="action-button" for="imageInputMobile" role="button" tabindex="0">导入图片
                   <input type="file" id="imageInputMobile" accept="image/*" multiple hidden>
                 </label>
@@ -819,7 +856,6 @@
               <div class="mobile-menu-items">
                 <button class="action-button" type="button" data-action="export-mobile">导出 PNG</button>
                 <button class="action-button" type="button" data-action="fullscreen-mobile">全屏专注</button>
-                <button class="action-button" type="button" data-action="reset-mobile">清空画布</button>
               </div>
             </div>
           </div>
