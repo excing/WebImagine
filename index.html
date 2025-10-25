@@ -1133,6 +1133,8 @@
           canvas.freeDrawingBrush.color = colorPicker.value;
           canvas.freeDrawingBrush.width = parseInt(brushSizeInput.value, 10) || 8;
           panMode = false;
+          canvas.selection = true;
+          canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
           canvas.defaultCursor = 'default';
         } else if (tool === 'eraser') {
           currentBrushMode = 'erase';
@@ -1141,16 +1143,22 @@
           canvas.freeDrawingBrush.color = '#ffffff';
           canvas.freeDrawingBrush.width = parseInt(brushSizeInput.value, 10) || 18;
           panMode = false;
+          canvas.selection = true;
+          canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
           canvas.defaultCursor = 'default';
         } else if (tool === 'pan') {
           canvas.isDrawingMode = false;
           panMode = true;
-          canvas.defaultCursor = 'grab';
+          canvas.selection = false;
           canvas.discardActiveObject();
+          canvas.forEachObject(obj => { obj.selectable = false; obj.evented = false; });
+          canvas.defaultCursor = 'grab';
           canvas.renderAll();
         } else {
           canvas.isDrawingMode = false;
           panMode = false;
+          canvas.selection = true;
+          canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
           canvas.defaultCursor = 'default';
         }
       }
@@ -1952,7 +1960,11 @@
       });
       canvas.on('object:modified', saveHistory);
       canvas.on('object:removed', saveHistory);
-      canvas.on('object:added', function () {
+      canvas.on('object:added', function (e) {
+        if (panMode && e.target) {
+          e.target.selectable = false;
+          e.target.evented = false;
+        }
         if (!history.undoStack.length) {
           saveHistory();
         }
