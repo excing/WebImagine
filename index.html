@@ -531,7 +531,7 @@
     }
 
     .zoom-control input[type="range"] {
-      width: 100px;
+      width: 160px;
       height: 4px;
       cursor: pointer;
       margin: 0 8px;
@@ -840,6 +840,10 @@
         height: 4px;
       }
 
+      .zoom-control input[type="range"] {
+        width: 140px;
+      }
+
       .history-control-mobile {
         display: block;
       }      
@@ -931,8 +935,8 @@
             <div class="zoom-control" title="缩放和定位">
               <span>缩放</span>
               <div class="zoom-inputs">
-                <input type="range" min="10" max="400" value="100" id="zoomRange" aria-label="缩放" />
-                <input type="number" min="10" max="400" value="100" id="zoomNumber" aria-label="缩放数值(%)" />
+                <input type="range" min="0" max="100" step="1" value="0" id="zoomRange" aria-label="缩放滑条" />
+                <input type="number" min="10" max="1000" value="100" id="zoomNumber" aria-label="缩放数值(%)" />
               </div>
               <button class="action-button" type="button" data-action="fit-content" aria-label="定位内容" title="将画面缩放并定位到全部内容">定位内容</button>
             </div>
@@ -975,8 +979,8 @@
               <div class="zoom-control">
                 <span style="white-space: nowrap; padding: 0 8px;">缩放</span>
                 <div class="zoom-inputs" style="flex: 1;">
-                  <input type="range" min="10" max="400" value="100" id="zoomRangeMobile" aria-label="缩放" />
-                  <input type="number" min="10" max="400" value="100" id="zoomNumberMobile" aria-label="缩放数值(%)" />
+                  <input type="range" min="0" max="100" step="1" value="0" id="zoomRangeMobile" aria-label="缩放滑条" />
+                  <input type="number" min="10" max="1000" value="100" id="zoomNumberMobile" aria-label="缩放数值(%)" />
                 </div>
                 <button class="action-button" type="button" data-action="fit-content-mobile">定位内容</button>
               </div>
@@ -1099,7 +1103,7 @@
       const zoomRangeMobile = document.getElementById('zoomRangeMobile');
       const zoomNumberMobile = document.getElementById('zoomNumberMobile');
       const MIN_ZOOM = 0.1;
-      const MAX_ZOOM = 4;
+      const MAX_ZOOM = 10;
 
       const history = {
         undoStack: [],
@@ -1266,11 +1270,24 @@
         return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
       }
 
+      // 对数滑条映射：slider ∈ [0,100] → percent ∈ [10,1000]
+      function sliderToPercent(sliderValue) {
+        const s = Math.max(0, Math.min(100, Number(sliderValue) || 0));
+        const percent = Math.round(10 * Math.pow(100, s / 100));
+        return Math.max(10, Math.min(1000, percent));
+      }
+      function percentToSlider(percentValue) {
+        const p = Math.max(10, Math.min(1000, Number(percentValue) || 100));
+        const v = 100 * Math.log(p / 10) / Math.log(100);
+        return Math.max(0, Math.min(100, Math.round(v)));
+      }
+
       function updateZoomInputs() {
         const percent = Math.round((canvas.getZoom() || 1) * 100);
-        if (zoomRange) zoomRange.value = String(percent);
+        const sliderVal = percentToSlider(percent);
+        if (zoomRange) zoomRange.value = String(sliderVal);
         if (zoomNumber) zoomNumber.value = String(percent);
-        if (zoomRangeMobile) zoomRangeMobile.value = String(percent);
+        if (zoomRangeMobile) zoomRangeMobile.value = String(sliderVal);
         if (zoomNumberMobile) zoomNumberMobile.value = String(percent);
       }
 
@@ -1762,7 +1779,8 @@
         document.getElementById('gapXMobile').value = document.getElementById('gapX').value;
         document.getElementById('gapYMobile').value = document.getElementById('gapY').value;
         const p = Math.round((canvas.getZoom() || 1) * 100);
-        if (zoomRangeMobile) zoomRangeMobile.value = String(p);
+        const s = percentToSlider(p);
+        if (zoomRangeMobile) zoomRangeMobile.value = String(s);
         if (zoomNumberMobile) zoomNumberMobile.value = String(p);
       }
 
@@ -1775,8 +1793,9 @@
         document.getElementById('gapX').value = document.getElementById('gapXMobile').value;
         document.getElementById('gapY').value = document.getElementById('gapYMobile').value;
         if (zoomRangeMobile) {
-          const p = Math.max(10, Math.min(400, parseInt(zoomRangeMobile.value, 10) || 100));
-          if (zoomRange) zoomRange.value = String(p);
+          const s = Math.max(0, Math.min(100, parseInt(zoomRangeMobile.value, 10) || 0));
+          const p = sliderToPercent(s);
+          if (zoomRange) zoomRange.value = String(s);
           if (zoomNumber) zoomNumber.value = String(p);
           zoomToPercent(p);
         }
@@ -1868,19 +1887,21 @@
       });
 
       zoomRangeMobile?.addEventListener('input', () => {
-        const p = Math.max(10, Math.min(400, parseInt(zoomRangeMobile.value, 10) || 100));
-        zoomRangeMobile.value = p;
+        const s = Math.max(0, Math.min(100, parseInt(zoomRangeMobile.value, 10) || 0));
+        const p = sliderToPercent(s);
+        zoomRangeMobile.value = s;
         zoomNumberMobile.value = p;
-        zoomRange.value = p;
+        zoomRange.value = s;
         zoomNumber.value = p;
         zoomToPercent(p);
       });
 
       zoomNumberMobile?.addEventListener('input', () => {
-        const p = Math.max(10, Math.min(400, parseInt(zoomNumberMobile.value, 10) || 100));
+        const p = Math.max(10, Math.min(1000, parseInt(zoomNumberMobile.value, 10) || 100));
+        const s = percentToSlider(p);
         zoomNumberMobile.value = p;
-        zoomRangeMobile.value = p;
-        zoomRange.value = p;
+        zoomRangeMobile.value = s;
+        zoomRange.value = s;
         zoomNumber.value = p;
         zoomToPercent(p);
       });
@@ -1972,16 +1993,18 @@
       });
 
       zoomRange?.addEventListener('input', () => {
-        const p = Math.max(10, Math.min(400, parseInt(zoomRange.value, 10) || 100));
-        zoomRange.value = p;
+        const s = Math.max(0, Math.min(100, parseInt(zoomRange.value, 10) || 0));
+        const p = sliderToPercent(s);
+        zoomRange.value = s;
         zoomNumber.value = p;
         zoomToPercent(p);
       });
 
       zoomNumber?.addEventListener('input', () => {
-        const p = Math.max(10, Math.min(400, parseInt(zoomNumber.value, 10) || 100));
+        const p = Math.max(10, Math.min(1000, parseInt(zoomNumber.value, 10) || 100));
+        const s = percentToSlider(p);
         zoomNumber.value = p;
-        zoomRange.value = p;
+        zoomRange.value = s;
         zoomToPercent(p);
       });
 
