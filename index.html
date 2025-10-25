@@ -840,17 +840,16 @@
         height: 4px;
       }
 
+      .history-control-mobile {
+        display: block;
+      }      
+
       footer {
         flex-direction: column;
         align-items: flex-start;
       }
     }
 
-    @media (max-width: 540px) {
-      .history-control-mobile {
-        display: block;
-      }
-    }
   </style>
 </head>
 <body>
@@ -2100,10 +2099,17 @@
       let isTwoFingerTouch = false;
 
       canvasElement.addEventListener('touchstart', (e) => {
-        // 双指触摸用于拖动
+        // 双指触摸或 panMode 下的单指触摸用于拖动
         if (e.touches.length === 2) {
           e.preventDefault();
           isTwoFingerTouch = true;
+          touchDragging = true;
+          const touch = e.touches[0];
+          touchStart = { x: touch.clientX, y: touch.clientY };
+          canvas.selection = false;
+        } else if (panMode && e.touches.length === 1) {
+          e.preventDefault();
+          isTwoFingerTouch = false;
           touchDragging = true;
           const touch = e.touches[0];
           touchStart = { x: touch.clientX, y: touch.clientY };
@@ -2114,19 +2120,22 @@
       }, { passive: false });
 
       canvasElement.addEventListener('touchmove', (e) => {
-        if (touchDragging && isTwoFingerTouch && e.touches.length === 2) {
-          e.preventDefault();
-          const touch = e.touches[0];
-          const dx = touch.clientX - touchStart.x;
-          const dy = touch.clientY - touchStart.y;
-          
-          // 使用 viewportTransform 平移画布
-          const vpt = canvas.viewportTransform;
-          vpt[4] += dx;
-          vpt[5] += dy;
-          
-          touchStart = { x: touch.clientX, y: touch.clientY };
-          canvas.requestRenderAll();
+        if (touchDragging && e.touches.length > 0) {
+          const shouldProcess = (isTwoFingerTouch && e.touches.length === 2) || (!isTwoFingerTouch && panMode && e.touches.length === 1);
+          if (shouldProcess) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const dx = touch.clientX - touchStart.x;
+            const dy = touch.clientY - touchStart.y;
+            
+            // 使用 viewportTransform 平移画布
+            const vpt = canvas.viewportTransform;
+            vpt[4] += dx;
+            vpt[5] += dy;
+            
+            touchStart = { x: touch.clientX, y: touch.clientY };
+            canvas.requestRenderAll();
+          }
         }
       }, { passive: false });
 
