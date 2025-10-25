@@ -792,7 +792,7 @@
   </main>
   <footer>
     <span>© <span id="year"></span> WebImagine. 单文件纯前端应用。</span>
-    <span>快捷键：Ctrl/Cmd + Z 撤销 · Ctrl/Cmd + Shift + Z 恢复 · Delete 删除 · Ctrl/Cmd + D 复制</span>
+    <span>快捷键：Ctrl/Cmd + Z 撤销 · Ctrl/Cmd + Shift + Z 恢复 · Delete 删除 · Ctrl/Cmd + D 复制 · 空格 + 拖动/中键拖动 移动画布 · 移动端双指拖动</span>
   </footer>
 
   <div class="text-panel" id="textPanel" hidden>
@@ -1766,6 +1766,13 @@
 
       document.addEventListener('keydown', (event) => {
         const isInputing = event.target && (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.isContentEditable);
+        if (!isInputing && event.code === 'Space' && !spacePressed) {
+          event.preventDefault();
+          spacePressed = true;
+          canvas.discardActiveObject();
+          canvas.defaultCursor = 'grab';
+          canvas.renderAll();
+        }
         if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {
           event.preventDefault();
           if (event.shiftKey) {
@@ -1801,6 +1808,20 @@
         }
       });
 
+      document.addEventListener('keyup', (event) => {
+        if (event.code === 'Space') {
+          spacePressed = false;
+          canvas.defaultCursor = 'default';
+          isDragging = false;
+          canvas.renderAll();
+        }
+      });
+
+      // 拖动功能状态
+      let isDragging = false;
+      let dragStart = { x: 0, y: 0 };
+      let spacePressed = false;
+
       canvas.on('mouse:wheel', (opt) => {
         const e = opt.e;
         if (!(e.ctrlKey || e.metaKey)) return;
@@ -1814,6 +1835,96 @@
         canvas.requestRenderAll();
         updateZoomInputs();
       });
+
+      // 画布拖动功能
+      canvas.on('mouse:down', (opt) => {
+        const e = opt.e;
+        // 空格+左键 或 中键
+        if ((spacePressed && e.button === 0) || e.button === 1) {
+          e.preventDefault();
+          isDragging = true;
+          dragStart = { x: e.clientX, y: e.clientY };
+          canvas.selection = false;
+          canvas.defaultCursor = 'grabbing';
+          canvas.renderAll();
+        }
+      });
+
+      canvas.on('mouse:move', (opt) => {
+        if (!isDragging) return;
+        const e = opt.e;
+        const dx = e.clientX - dragStart.x;
+        const dy = e.clientY - dragStart.y;
+        
+        // 使用 viewportTransform 平移画布
+        const vpt = canvas.viewportTransform;
+        vpt[4] += dx;
+        vpt[5] += dy;
+        
+        dragStart = { x: e.clientX, y: e.clientY };
+        canvas.requestRenderAll();
+      });
+
+      canvas.on('mouse:up', (opt) => {
+        if (isDragging) {
+          isDragging = false;
+          canvas.selection = true;
+          canvas.defaultCursor = spacePressed ? 'grab' : 'default';
+          canvas.renderAll();
+        }
+      });
+
+      // 移动端触摸拖动功能
+      let touchDragging = false;
+      let touchStart = { x: 0, y: 0 };
+      let isTwoFingerTouch = false;
+
+      canvasElement.addEventListener('touchstart', (e) => {
+        // 双指触摸用于拖动
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          isTwoFingerTouch = true;
+          touchDragging = true;
+          const touch = e.touches[0];
+          touchStart = { x: touch.clientX, y: touch.clientY };
+          canvas.selection = false;
+        } else {
+          isTwoFingerTouch = false;
+        }
+      }, { passive: false });
+
+      canvasElement.addEventListener('touchmove', (e) => {
+        if (touchDragging && isTwoFingerTouch && e.touches.length === 2) {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const dx = touch.clientX - touchStart.x;
+          const dy = touch.clientY - touchStart.y;
+          
+          // 使用 viewportTransform 平移画布
+          const vpt = canvas.viewportTransform;
+          vpt[4] += dx;
+          vpt[5] += dy;
+          
+          touchStart = { x: touch.clientX, y: touch.clientY };
+          canvas.requestRenderAll();
+        }
+      }, { passive: false });
+
+      canvasElement.addEventListener('touchend', (e) => {
+        if (touchDragging) {
+          touchDragging = false;
+          isTwoFingerTouch = false;
+          canvas.selection = true;
+        }
+      }, { passive: false });
+
+      canvasElement.addEventListener('touchcancel', (e) => {
+        if (touchDragging) {
+          touchDragging = false;
+          isTwoFingerTouch = false;
+          canvas.selection = true;
+        }
+      }, { passive: false });
       
       // Close mobile menu when clicking outside
       document.addEventListener('click', (event) => {
