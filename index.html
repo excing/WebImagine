@@ -442,6 +442,10 @@
       cursor: not-allowed;
     }
 
+    .history-control-mobile {
+      display: none;
+    }
+
     .brush-control {
       display: inline-flex;
       align-items: center;
@@ -841,6 +845,12 @@
         align-items: flex-start;
       }
     }
+
+    @media (max-width: 540px) {
+      .history-control-mobile {
+        display: block;
+      }
+    }
   </style>
 </head>
 <body>
@@ -885,12 +895,13 @@
             <button class="tool-button" type="button" data-tool="brush"><span class="btn-icon">✏️</span><span class="btn-text">画笔</span></button>
             <button class="tool-button" type="button" data-action="text"><span class="btn-icon">T</span><span class="btn-text">文字</span></button>
             <button class="tool-button" type="button" data-tool="eraser"><span class="btn-icon">◻️</span><span class="btn-text">橡皮擦</span></button>
-            <button class="action-button mobile-menu-toggle" type="button" data-action="toggle-menu" aria-label="更多操作"><span class="btn-icon">☰</span><span class="btn-text">更多</span></button>
-            <div class="history-control" title="历史操作">
+            <button class="action-button" type="button" data-action="fullscreen"><span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span></button>
+            <div class="history-control-mobile" title="历史操作">
               <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
               <button class="action-button" type="button" data-action="redo" aria-label="恢复 (Ctrl+Shift+Z)">恢复</button>
               <button class="action-button" type="button" data-action="reset" aria-label="清空画布">清空</button>
             </div>
+            <button class="action-button mobile-menu-toggle" type="button" data-action="toggle-menu" aria-label="更多操作"><span class="btn-icon">☰</span><span class="btn-text">更多</span></button>
           </div>
           <div class="toolbar-row">
             <div class="brush-control" title="画笔设置">
@@ -929,28 +940,15 @@
               <button class="action-button" type="button" data-action="arrange">自动排列</button>
             </div>
             <button class="action-button" type="button" data-action="export">导出 PNG</button>
-            <button class="action-button" type="button" data-action="fullscreen">全屏专注</button>
-          </div>
+            <div class="history-control" title="历史操作">
+              <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
+              <button class="action-button" type="button" data-action="redo" aria-label="恢复 (Ctrl+Shift+Z)">恢复</button>
+              <button class="action-button" type="button" data-action="reset" aria-label="清空画布">清空</button>
+            </div>          </div>
           <div class="mobile-dropdown-menu" id="mobileMenu">
             <div class="mobile-menu-section">
-              <h3>画布设置</h3>
-              <div class="canvas-size-control" style="margin-bottom: 12px;">
-                <input type="number" min="240" value="0" id="canvasWidthMobile" aria-label="画布宽度" placeholder="宽" />
-                <input type="number" min="240" value="0" id="canvasHeightMobile" aria-label="画布高度" placeholder="高" />
-                <button class="action-button" type="button" data-action="auto-fit-mobile">自动调整</button>
-              </div>
-              <div class="zoom-control" style="width: 100%;">
-                <span style="white-space: nowrap; padding: 0 8px;">缩放</span>
-                <div class="zoom-inputs" style="flex: 1;">
-                  <input type="range" min="10" max="400" value="100" id="zoomRangeMobile" aria-label="缩放" />
-                  <input type="number" min="10" max="400" value="100" id="zoomNumberMobile" aria-label="缩放数值(%)" />
-                </div>
-                <button class="action-button" type="button" data-action="fit-content-mobile">定位内容</button>
-              </div>
-            </div>
-            <div class="mobile-menu-section">
-              <h3>画笔设置</h3>
-              <div class="brush-control" style="width: 100%; margin-bottom: 12px;">
+              <h3>画笔和画布设置</h3>
+              <div class="brush-control" style="margin-bottom: 12px;">
                 <span class="btn-text">画笔</span>
                 <div class="color-input">
                   <input type="color" value="#ef4444" id="colorPickerMobile" aria-label="画笔颜色" />
@@ -960,32 +958,40 @@
                   <input type="number" min="1" max="60" value="8" id="brushSizeNumberMobile" aria-label="画笔粗细数值" />
                 </div>
               </div>
+              <div class="canvas-size-control" style="margin-bottom: 12px;">
+                <input type="number" min="240" value="0" id="canvasWidthMobile" aria-label="画布宽度" placeholder="宽" />
+                <input type="number" min="240" value="0" id="canvasHeightMobile" aria-label="画布高度" placeholder="高" />
+                <button class="action-button" type="button" data-action="auto-fit-mobile">自动调整</button>
+              </div>
+              <div class="zoom-control">
+                <span style="white-space: nowrap; padding: 0 8px;">缩放</span>
+                <div class="zoom-inputs" style="flex: 1;">
+                  <input type="range" min="10" max="400" value="100" id="zoomRangeMobile" aria-label="缩放" />
+                  <input type="number" min="10" max="400" value="100" id="zoomNumberMobile" aria-label="缩放数值(%)" />
+                </div>
+                <button class="action-button" type="button" data-action="fit-content-mobile">定位内容</button>
+              </div>
+
             </div>
             <div class="mobile-menu-section">
               <h3>操作</h3>
-              <div class="history-control" style="width: 100%; margin-bottom: 12px;">
-                <button class="action-button" type="button" data-action="undo-mobile" style="flex: 1; justify-content: center;">撤销</button>
-                <button class="action-button" type="button" data-action="redo-mobile" style="flex: 1; justify-content: center;">恢复</button>
-                <button class="action-button" type="button" data-action="reset-mobile" style="flex: 1; justify-content: center;">清空</button>
-              </div>
               <div class="mobile-menu-items">
-                <button class="action-button" type="button" data-action="toggle-snap-mobile">吸附</button>
                 <label class="action-button" for="imageInputMobile" role="button" tabindex="0">导入图片
                   <input type="file" id="imageInputMobile" accept="image/*" multiple hidden>
                 </label>
                 <button class="action-button" type="button" data-action="duplicate-mobile">复制图层</button>
+                <button class="action-button" type="button" data-action="toggle-snap-mobile">吸附</button>
+                <div class="arrange-control" style="margin-bottom: 12px;">
+                  <input type="number" min="0" max="100" value="0" id="gapXMobile" aria-label="排列X间距" placeholder="X" title="图片水平间距" />
+                  <input type="number" min="0" max="100" value="0" id="gapYMobile" aria-label="排列Y间距" placeholder="Y" title="图片垂直间距" />
+                  <button class="action-button" type="button" data-action="arrange-mobile">自动排列</button>
+                </div>
               </div>
             </div>
             <div class="mobile-menu-section">
-              <h3>排列与导出</h3>
-              <div class="mobile-menu-items" style="margin-bottom: 8px;">
-                <input type="number" min="0" max="100" value="0" id="gapXMobile" aria-label="排列X间距" placeholder="X间距" title="图片水平间距" style="width: 70px; padding: 8px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 8px;" />
-                <input type="number" min="0" max="100" value="0" id="gapYMobile" aria-label="排列Y间距" placeholder="Y间距" title="图片垂直间距" style="width: 70px; padding: 8px; border: 1px solid rgba(148, 163, 184, 0.35); border-radius: 8px;" />
-                <button class="action-button" type="button" data-action="arrange-mobile">自动排列</button>
-              </div>
+              <h3>导出</h3>
               <div class="mobile-menu-items">
                 <button class="action-button" type="button" data-action="export-mobile">导出 PNG</button>
-                <button class="action-button" type="button" data-action="fullscreen-mobile">全屏专注</button>
               </div>
             </div>
           </div>
@@ -1042,7 +1048,7 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js" integrity="sha256-SPjwkVvrUS/H/htIwO6wdd0IA8eQ79/XXNAH+cPuoso=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js" crossorigin="anonymous"></script>
   <script>
     (function () {
       const boardShell = document.getElementById('boardShell');
@@ -2182,7 +2188,7 @@
         const isFull = Boolean(document.fullscreenElement);
         boardShell.classList.toggle('is-fullscreen', isFull);
         if (fullscreenButton) {
-          fullscreenButton.textContent = isFull ? '退出全屏' : '全屏专注';
+          fullscreenButton.innerHTML = isFull ? `<span class="btn-icon">✕</span><span class="btn-text">退出全屏</span>` : `<span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span>`;
         }
         requestAnimationFrame(updateBoardStageHeight);
       });
