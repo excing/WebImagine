@@ -359,6 +359,56 @@
       background: rgba(37, 99, 235, 0.08);
     }
 
+    .canvas-size-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.92);
+      height: 36px;
+    }
+
+    .canvas-size-control input[type="number"] {
+      border: none;
+      height: 36px;
+      padding: 0 10px;
+      background: transparent;
+      color: var(--text);
+      font-size: 0.85rem;
+      text-align: center;
+      border-right: 1px solid rgba(148, 163, 184, 0.2);
+      width: 70px;
+    }
+
+    .canvas-size-control input[type="number"]:last-of-type {
+      width: 70px;
+    }
+
+    .canvas-size-control input[type="number"]::placeholder {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    .canvas-size-control input[type="number"]:focus {
+      outline: none;
+      background: rgba(37, 99, 235, 0.08);
+    }
+
+    .canvas-size-control .action-button {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      border-left: 1px solid rgba(148, 163, 184, 0.2);
+      height: 36px;
+      padding: 0 12px;
+    }
+
+    .canvas-size-control .action-button:hover {
+      background: rgba(37, 99, 235, 0.08);
+    }
+
     .board-stage {
       position: relative;
       flex: none;
@@ -678,15 +728,11 @@
             <button class="action-button mobile-menu-toggle" type="button" data-action="toggle-menu" aria-label="更多操作"><span class="btn-icon">☰</span><span class="btn-text">更多</span></button>
           </div>
           <div class="toolbar-row">
-            <label class="control" title="画布宽度">
-              <span>宽</span>
-              <input type="number" min="240" value="0" id="canvasWidth" aria-label="画布宽度" placeholder="auto" />
-            </label>
-            <label class="control" title="画布高度">
-              <span>高</span>
-              <input type="number" min="240" value="0" id="canvasHeight" aria-label="画布高度" placeholder="auto" />
-            </label>
-            <button class="action-button" type="button" data-action="auto-fit" aria-label="自动调整画布大小" title="根据容器大小自动调整画布尺寸">自动调整</button>
+            <div class="canvas-size-control" title="画布尺寸">
+              <input type="number" min="1920" value="0" id="canvasWidth" aria-label="画布宽度" placeholder="宽" />
+              <input type="number" min="1080" value="0" id="canvasHeight" aria-label="画布高度" placeholder="高" />
+              <button class="action-button" type="button" data-action="auto-fit" aria-label="自动调整画布大小">自动调整</button>
+            </div>
             <label class="control" title="缩放 (滚轮)">
               <span>缩放</span>
               <input type="range" min="10" max="400" value="100" id="zoomRange" aria-label="缩放" />
@@ -723,16 +769,12 @@
           <div class="mobile-dropdown-menu" id="mobileMenu">
             <div class="mobile-menu-section">
               <h3>画布设置</h3>
-              <div class="mobile-menu-items">
-                <label class="control" title="画布宽度">
-                  <span>宽</span>
-                  <input type="number" min="240" value="0" id="canvasWidthMobile" aria-label="画布宽度" placeholder="auto" />
-                </label>
-                <label class="control" title="画布高度">
-                  <span>高</span>
-                  <input type="number" min="240" value="0" id="canvasHeightMobile" aria-label="画布高度" placeholder="auto" />
-                </label>
+              <div class="canvas-size-control" style="margin-bottom: 12px;">
+                <input type="number" min="240" value="0" id="canvasWidthMobile" aria-label="画布宽度" placeholder="宽" />
+                <input type="number" min="240" value="0" id="canvasHeightMobile" aria-label="画布高度" placeholder="高" />
                 <button class="action-button" type="button" data-action="auto-fit-mobile">自动调整</button>
+              </div>
+              <div class="mobile-menu-items">
                 <label class="control" title="缩放">
                   <span>缩放</span>
                   <input type="range" min="10" max="400" value="100" id="zoomRangeMobile" aria-label="缩放" />
