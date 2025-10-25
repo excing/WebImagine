@@ -850,6 +850,16 @@
       }
     }
 
+    /* Disable native scrolling/gestures over the drawing area to allow custom pan/zoom */
+    .board-stage,
+    .board-stage-inner,
+    canvas#board {
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: contain;
+    }
+
   </style>
 </head>
 <body>
@@ -2042,6 +2052,16 @@
       let dragStart = { x: 0, y: 0 };
       let panMode = false;
 
+      function getClientPoint(evt) {
+        if (evt && evt.touches && evt.touches.length) {
+          return { x: evt.touches[0].clientX, y: evt.touches[0].clientY };
+        }
+        if (evt && evt.changedTouches && evt.changedTouches.length) {
+          return { x: evt.changedTouches[0].clientX, y: evt.changedTouches[0].clientY };
+        }
+        return { x: evt?.clientX ?? 0, y: evt?.clientY ?? 0 };
+      }
+
       canvas.on('mouse:wheel', (opt) => {
         const e = opt.e;
         e.preventDefault();
@@ -2055,14 +2075,17 @@
         updateZoomInputs();
       });
 
-      // 画布拖动功能
+      // 画布拖动功能（支持鼠标与触摸）
       canvas.on('mouse:down', (opt) => {
         const e = opt.e;
-        // 拖动模式下的左键 或 中键
-        if ((panMode && e.button === 0) || e.button === 1) {
-          e.preventDefault();
+        const isMiddleButton = e && e.button === 1;
+        const isTwoFinger = (e && e.touches && e.touches.length >= 2) || (e && e.changedTouches && e.changedTouches.length >= 2);
+        const allowPan = isMiddleButton || panMode || isTwoFinger;
+        if (allowPan) {
+          e?.preventDefault?.();
           isDragging = true;
-          dragStart = { x: e.clientX, y: e.clientY };
+          const p = getClientPoint(e);
+          dragStart = { x: p.x, y: p.y };
           canvas.selection = false;
           canvas.defaultCursor = 'grabbing';
           canvas.renderAll();
@@ -2072,15 +2095,15 @@
       canvas.on('mouse:move', (opt) => {
         if (!isDragging) return;
         const e = opt.e;
-        const dx = e.clientX - dragStart.x;
-        const dy = e.clientY - dragStart.y;
-        
-        // 使用 viewportTransform 平移画布
+        const p = getClientPoint(e);
+        const dx = p.x - dragStart.x;
+        const dy = p.y - dragStart.y;
+
         const vpt = canvas.viewportTransform;
         vpt[4] += dx;
         vpt[5] += dy;
-        
-        dragStart = { x: e.clientX, y: e.clientY };
+
+        dragStart = { x: p.x, y: p.y };
         canvas.requestRenderAll();
       });
 
@@ -2093,88 +2116,7 @@
         }
       });
 
-      // 移动端触摸拖动功能 - 使用 Fabric.js 的 canvas 事件
-      let touchDragging = false;
-      let touchStart = { x: 0, y: 0 };
-      let isTwoFingerTouch = false;
-
-      canvas.on({
-        'touch:drag': function(e) {
-          if (panMode || isTwoFingerTouch) {
-            e.e.preventDefault();
-            touchDragging = true;
-            
-            const touches = e.e.changedTouches;
-            if (touches && touches.length > 0) {
-              const touch = touches[0];
-              const dx = touch.clientX - touchStart.x;
-              const dy = touch.clientY - touchStart.y;
-              
-              // 使用 viewportTransform 平移画布
-              const vpt = canvas.viewportTransform;
-              vpt[4] += dx;
-              vpt[5] += dy;
-              
-              touchStart = { x: touch.clientX, y: touch.clientY };
-              canvas.requestRenderAll();
-            }
-          }
-        },
-        'touch:gesture': function(e) {
-          if (e.e && e.e.changedTouches && e.e.changedTouches.length === 2) {
-            isTwoFingerTouch = true;
-            touchDragging = true;
-            const touch = e.e.changedTouches[0];
-            touchStart = { x: touch.clientX, y: touch.clientY };
-            canvas.selection = false;
-          }
-        },
-        'touch:orientation': function(e) {
-          // 处理方向改变事件
-        },
-        'touch:shake': function(e) {
-          // 处理摇晃事件
-        },
-        'touch:longpress': function(e) {
-          // 处理长按事件
-        }
-      });
-
-      // 重写 panMode 切换时的初始化
-      const originalSetTool = setTool;
-      window.setToolWithPan = function(tool) {
-        originalSetTool.call(this, tool);
-        if (tool === 'pan') {
-          touchStart = { x: 0, y: 0 };
-          touchDragging = false;
-        }
-      };
-      
-      // 监听单指触摸开始（在 panMode 时）
-      canvasElement.addEventListener('touchstart', (e) => {
-        if (panMode && e.changedTouches.length === 1) {
-          const touch = e.changedTouches[0];
-          touchStart = { x: touch.clientX, y: touch.clientY };
-          canvas.selection = false;
-        }
-      }, { passive: false });
-
-      // 监听触摸结束
-      canvasElement.addEventListener('touchend', (e) => {
-        if (touchDragging) {
-          touchDragging = false;
-          isTwoFingerTouch = false;
-          canvas.selection = true;
-        }
-      }, { passive: false });
-
-      canvasElement.addEventListener('touchcancel', (e) => {
-        if (touchDragging) {
-          touchDragging = false;
-          isTwoFingerTouch = false;
-          canvas.selection = true;
-        }
-      }, { passive: false });
+      // 触摸事件通过 mouse:* 统一处理，无需额外 touch:* 事件与 DOM 监听
       
       // Close mobile menu when clicking outside
       document.addEventListener('click', (event) => {
