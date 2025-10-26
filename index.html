@@ -2238,16 +2238,20 @@
 
       // 触摸事件通过 mouse:* 统一处理，无需额外 touch:* 事件与 DOM 监听
       
-      // Close mobile menu when clicking outside
-      document.addEventListener('click', (event) => {
-        if (mobileMenu?.classList.contains('show')) {
-          const isMenuClick = mobileMenu.contains(event.target);
-          const isToggleClick = event.target.closest('[data-action="toggle-menu"]');
-          if (!isMenuClick && !isToggleClick) {
-            mobileMenu.classList.remove('show');
-          }
+      // Close mobile menu when clicking/tapping outside, including canvas area
+      function closeMenuIfOutside(target) {
+        if (!mobileMenu?.classList.contains('show')) return;
+        const isMenuClick = mobileMenu.contains(target);
+        const isToggleClick = target.closest && target.closest('[data-action="toggle-menu"]');
+        if (!isMenuClick && !isToggleClick) {
+          mobileMenu.classList.remove('show');
         }
-      });
+      }
+      // Fallback for mouse click
+      document.addEventListener('click', (event) => closeMenuIfOutside(event.target));
+      // Capture pointer/touch early so Fabric/gesture handling won’t block closing
+      document.addEventListener('pointerdown', (event) => closeMenuIfOutside(event.target), { capture: true });
+      document.addEventListener('touchstart', (event) => closeMenuIfOutside(event.target), { capture: true });
 
       canvas.on('selection:created', synchronizeColorWithSelection);
       canvas.on('selection:updated', synchronizeColorWithSelection);
