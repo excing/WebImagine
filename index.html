@@ -1296,14 +1296,15 @@
       }
 
       function updateHistoryButtons() {
-        const undoBtn = document.querySelector('[data-action="undo"]');
-        const redoBtn = document.querySelector('[data-action="redo"]');
-        if (undoBtn) {
-          undoBtn.disabled = history.undoStack.length <= 1;
-        }
-        if (redoBtn) {
-          redoBtn.disabled = history.redoStack.length === 0;
-        }
+        const canUndo = history.undoStack.length > 1;
+        const canRedo = history.redoStack.length > 0;
+        // 同步所有位置（桌面与移动端）的撤销/恢复按钮状态
+        document.querySelectorAll('[data-action="undo"], [data-action="undo-mobile"]').forEach(btn => {
+          btn.disabled = !canUndo;
+        });
+        document.querySelectorAll('[data-action="redo"], [data-action="redo-mobile"]').forEach(btn => {
+          btn.disabled = !canRedo;
+        });
       }
 
       function setTool(tool) {
@@ -1807,13 +1808,13 @@
         showToast(snapEnabled ? '吸附已启用' : '吸附已禁用');
       });
 
-      document.querySelector('[data-action="undo"]').addEventListener('click', () => undo());
-      document.querySelector('[data-action="redo"]').addEventListener('click', () => redo());
+      document.querySelectorAll('[data-action="undo"]').forEach(btn => btn.addEventListener('click', () => undo()));
+      document.querySelectorAll('[data-action="redo"]').forEach(btn => btn.addEventListener('click', () => redo()));
       document.querySelector('[data-action="arrange"]').addEventListener('click', () => autoArrangeImages());
       document.querySelector('[data-action="export"]').addEventListener('click', () => exportCanvas());
       document.querySelector('[data-action="duplicate"]').addEventListener('click', () => duplicateObject());
       document.querySelector('[data-action="fullscreen"]').addEventListener('click', () => toggleFullscreen());
-      document.querySelector('[data-action="reset"]').addEventListener('click', () => resetCanvas());
+      document.querySelectorAll('[data-action="reset"]').forEach(btn => btn.addEventListener('click', () => resetCanvas()));
       document.querySelector('[data-action="fit-content"]').addEventListener('click', () => fitContentView());
       
       // Mobile menu toggle
