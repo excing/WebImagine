@@ -853,12 +853,12 @@
       <div class="board-shell" id="boardShell" aria-label="交互画板">
         <div class="board-toolbar" role="toolbar" aria-label="画板工具栏">
           <div class="toolbar-row tools">
-            <button class="tool-button active" type="button" data-tool="pointer"><span class="btn-icon" style="padding-bottom: 4px;">⌖</span><span class="btn-text">选择</span></button>
-            <button class="tool-button" type="button" data-tool="pan"><span class="btn-icon">✋</span><span class="btn-text">拖动</span></button>
-            <button class="tool-button" type="button" data-tool="brush"><span class="btn-icon">✏️</span><span class="btn-text">画笔</span></button>
-            <button class="tool-button" type="button" data-action="text"><span class="btn-icon">T</span><span class="btn-text">文字</span></button>
-            <button class="tool-button" type="button" data-tool="eraser"><span class="btn-icon">◻️</span><span class="btn-text">橡皮擦</span></button>
-            <button class="action-button" type="button" data-action="fullscreen"><span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span></button>
+            <button class="tool-button active" type="button" data-tool="pointer" title="选择 (V)"><span class="btn-icon" style="padding-bottom: 4px;">⌖</span><span class="btn-text">选择</span></button>
+            <button class="tool-button" type="button" data-tool="pan" title="拖动 (Space / H)"><span class="btn-icon">✋</span><span class="btn-text">拖动</span></button>
+            <button class="tool-button" type="button" data-tool="brush" title="画笔 (B)"><span class="btn-icon">✏️</span><span class="btn-text">画笔</span></button>
+            <button class="tool-button" type="button" data-action="text" title="文字 (T)"><span class="btn-icon">T</span><span class="btn-text">文字</span></button>
+            <button class="tool-button" type="button" data-tool="eraser" title="橡皮擦 (E)"><span class="btn-icon">◻️</span><span class="btn-text">橡皮擦</span></button>
+            <button class="action-button" type="button" data-action="fullscreen" title="全屏专注 (F)"><span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span></button>
             <div class="history-control-mobile" title="历史操作">
               <button class="action-button" type="button" data-action="undo" aria-label="撤销 (Ctrl+Z)">撤销</button>
               <button class="action-button" type="button" data-action="redo" aria-label="恢复 (Ctrl+Shift+Z)">恢复</button>
@@ -968,7 +968,7 @@
   </main>
   <footer>
     <span>© <span id="year"></span> WebImagine. 单文件纯前端应用。</span>
-    <span>快捷键：Ctrl/Cmd + Z 撤销 · Ctrl/Cmd + Shift + Z 恢复 · Delete 删除 · Ctrl/Cmd + D 复制 · 鼠标滚轮缩放 · 中键拖动/移动端双指拖动 移动画布</span>
+    <span>快捷键：Ctrl/Cmd + Z 撤销 · Ctrl/Cmd + Shift + Z 恢复 · Delete 删除 · Ctrl/Cmd + D 复制 · V 选择 · Space/H 拖动 · B 画笔 · T 文字 · E 橡皮擦 · F 全屏 · 鼠标滚轮缩放</span>
   </footer>
 
   <div class="text-panel" id="textPanel" hidden>
@@ -2037,6 +2037,20 @@
         }
         if (event.key === 'Escape' && mobileMenu?.classList.contains('show')) {
           mobileMenu.classList.remove('show');
+        }
+
+        // 工具快捷键（仅在非输入状态且无修饰键时生效）
+        if (!isInputing && !event.ctrlKey && !event.metaKey && !event.altKey) {
+          const k = event.key;
+          if (!k) return;
+          const lower = k.toLowerCase();
+          if (lower === 'v') { setTool('pointer'); }
+          else if (lower === 'b') { setTool('brush'); }
+          else if (lower === 'e') { setTool('eraser'); }
+          else if (lower === 'h') { setTool('pan'); }
+          else if (lower === 't') { openTextDialog(); }
+          else if (lower === 'f') { toggleFullscreen(); }
+          else if (k === ' ' || lower === ' ') { event.preventDefault(); setTool('pan'); }
         }
       });
 
