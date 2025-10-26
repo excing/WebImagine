@@ -581,6 +581,8 @@
       align-items: flex-start;
       justify-content: flex-start;
       overflow: auto;
+      -ms-overflow-style: none; /* IE/Edge 旧版隐藏滚动条 */
+      scrollbar-width: none; /* Firefox 隐藏滚动条 */
       padding: 16px;
     }
 
@@ -776,7 +778,7 @@
       gap: 8px;
     }
 
-    @media (max-width: 1080px) {
+    @media (max-width: 1280px) {
       .hero {
         grid-template-columns: 1fr;
       }
@@ -863,6 +865,22 @@
       user-select: none;
       overscroll-behavior: contain;
     }
+
+    /* 隐藏原生滚动条（使用自定义叠加滚动条） */
+    .board-stage::-webkit-scrollbar { width: 0; height: 0; }
+    .board-stage::-webkit-scrollbar-track { background: transparent; }
+    .board-stage::-webkit-scrollbar-thumb { background: transparent; border: none; }
+    .board-stage::-webkit-scrollbar-corner { background: transparent; }
+
+    /* 自定义叠加滚动条，仅作用于画布容器 */
+    .custom-scrollbar { position: absolute; z-index: 5; user-select: none; touch-action: none; }
+    .custom-scrollbar.h { height: 16px; }
+    .custom-scrollbar.v { width: 16px; }
+    .custom-scrollbar .track { position: relative; width: 100%; height: 100%; background: #e6eaf3; border-radius: 8px; }
+    .custom-scrollbar .thumb { position: absolute; background: var(--primary); border-radius: 8px; }
+    .custom-scrollbar.h .thumb { height: 100%; min-width: 24px; }
+    .custom-scrollbar.v .thumb { width: 100%; min-height: 24px; }
+    .custom-scrollbar .thumb:hover { background: var(--primary-dark); }
 
   </style>
 </head>
@@ -1014,6 +1032,12 @@
             <canvas id="board" role="img" aria-label="绘图画布"></canvas>
             <div class="drop-hint" id="dropHint">拖拽图片到这里，自动导入并排版</div>
           </div>
+        </div>
+        <div class="custom-scrollbar h" id="scrollbarH" role="scrollbar" aria-controls="boardStage" aria-orientation="horizontal">
+          <div class="track"><div class="thumb" id="scrollbarHThumb"></div></div>
+        </div>
+        <div class="custom-scrollbar v" id="scrollbarV" role="scrollbar" aria-controls="boardStage" aria-orientation="vertical">
+          <div class="track"><div class="thumb" id="scrollbarVThumb"></div></div>
         </div>
       </div>
     </section>
@@ -1220,6 +1244,7 @@
         canvas.setHeight(height);
         canvas.calcOffset();
         canvas.renderAll();
+        updateCustomScrollbars();
       }
 
       function updateCanvasSizeDisplay() {
@@ -1255,16 +1280,191 @@
         }
       }
 
+      // 自定义叠加滚动条
+      const scrollbarH = document.getElementById('scrollbarH');
+      const scrollbarV = document.getElementById('scrollbarV');
+      const thumbH = document.getElementById('scrollbarHThumb');
+      const thumbV = document.getElementById('scrollbarVThumb');
+
+      function updateScrollbarLayout() {
+        if (!scrollbarH || !scrollbarV) return;
+        const shellRect = boardShell.getBoundingClientRect();
+        const stageRect = boardStage.getBoundingClientRect();
+        const left = Math.max(0, Math.round(stageRect.left - shellRect.left));
+        const right = Math.max(0, Math.round(shellRect.right - stageRect.right));
+        const top = Math.max(0, Math.round(stageRect.top - shellRect.top));
+        const bottom = Math.max(0, Math.round(shellRect.bottom - stageRect.bottom));
+        // 水平条贴合 stage 底部，沿左右内边距对齐
+        scrollbarH.style.left = left + 'px';
+        scrollbarH.style.right = right + 'px';
+        scrollbarH.style.bottom = bottom + 'px';
+        // 垂直条贴合 stage 右侧，沿上下内边距对齐
+        scrollbarV.style.top = top + 'px';
+        scrollbarV.style.bottom = bottom + 'px';
+        scrollbarV.style.right = right + 'px';
+      }
+
+      function updateCustomScrollbars() {
+        if (!scrollbarH || !scrollbarV || !thumbH || !thumbV) return;
+        const cw = boardStage.clientWidth;
+        const ch = boardStage.clientHeight;
+        const sw = boardStage.scrollWidth;
+        const sh = boardStage.scrollHeight;
+        {
+          const track = scrollbarH.querySelector('.track');
+          const trackW = track.clientWidth;
+          const minW = 24;
+          const w = Math.max(minW, Math.round(cw / Math.max(sw, 1) * trackW));
+          thumbH.style.width = w + 'px';
+          const maxThumbX = Math.max(0, trackW - w);
+          const maxScrollL = Math.max(0, sw - cw);
+          const x = maxScrollL ? Math.round(boardStage.scrollLeft / maxScrollL * maxThumbX) : 0;
+          thumbH.style.transform = `translateX(${x}px)`;
+          scrollbarH.setAttribute('aria-valuemin', '0');
+          scrollbarH.setAttribute('aria-valuemax', String(maxScrollL));
+          scrollbarH.setAttribute('aria-valuenow', String(boardStage.scrollLeft));
+        }
+        {
+          const track = scrollbarV.querySelector('.track');
+          const trackH = track.clientHeight;
+          const minH = 24;
+          const h = Math.max(minH, Math.round(ch / Math.max(sh, 1) * trackH));
+          thumbV.style.height = h + 'px';
+          const maxThumbY = Math.max(0, trackH - h);
+          const maxScrollT = Math.max(0, sh - ch);
+          const y = maxScrollT ? Math.round(boardStage.scrollTop / maxScrollT * maxThumbY) : 0;
+          thumbV.style.transform = `translateY(${y}px)`;
+          scrollbarV.setAttribute('aria-valuemin', '0');
+          scrollbarV.setAttribute('aria-valuemax', String(maxScrollT));
+          scrollbarV.setAttribute('aria-valuenow', String(boardStage.scrollTop));
+        }
+      }
+
+      function setupScrollbarDragging() {
+        if (thumbH) {
+          thumbH.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            const track = scrollbarH.querySelector('.track');
+            const tr = track.getBoundingClientRect();
+            const th = thumbH.getBoundingClientRect();
+            const startX = e.clientX;
+            const startThumbX = th.left - tr.left;
+            const cw = boardStage.clientWidth;
+            const sw = boardStage.scrollWidth;
+            const maxScrollL = Math.max(0, sw - cw);
+            const trackW = tr.width;
+            const thumbW = th.width;
+            const maxX = Math.max(0, trackW - thumbW);
+            function move(ev) {
+              const dx = ev.clientX - startX;
+              const nx = Math.max(0, Math.min(maxX, startThumbX + dx));
+              const ratio = maxX ? nx / maxX : 0;
+              boardStage.scrollLeft = Math.round(ratio * maxScrollL);
+            }
+            function up() {
+              window.removeEventListener('pointermove', move);
+              window.removeEventListener('pointerup', up);
+            }
+            window.addEventListener('pointermove', move);
+            window.addEventListener('pointerup', up, { once: true });
+            thumbH.setPointerCapture && thumbH.setPointerCapture(e.pointerId);
+          });
+        }
+        if (thumbV) {
+          thumbV.addEventListener('pointerdown', (e) => {
+            e.preventDefault();
+            const track = scrollbarV.querySelector('.track');
+            const tr = track.getBoundingClientRect();
+            const th = thumbV.getBoundingClientRect();
+            const startY = e.clientY;
+            const startThumbY = th.top - tr.top;
+            const ch = boardStage.clientHeight;
+            const sh = boardStage.scrollHeight;
+            const maxScrollT = Math.max(0, sh - ch);
+            const trackH = tr.height;
+            const thumbHgt = th.height;
+            const maxY = Math.max(0, trackH - thumbHgt);
+            function move(ev) {
+              const dy = ev.clientY - startY;
+              const ny = Math.max(0, Math.min(maxY, startThumbY + dy));
+              const ratio = maxY ? ny / maxY : 0;
+              boardStage.scrollTop = Math.round(ratio * maxScrollT);
+            }
+            function up() {
+              window.removeEventListener('pointermove', move);
+              window.removeEventListener('pointerup', up);
+            }
+            window.addEventListener('pointermove', move);
+            window.addEventListener('pointerup', up, { once: true });
+            thumbV.setPointerCapture && thumbV.setPointerCapture(e.pointerId);
+          });
+        }
+
+        const trackH = scrollbarH && scrollbarH.querySelector('.track');
+        if (trackH) {
+          trackH.addEventListener('pointerdown', (e) => {
+            if (e.target === thumbH) return;
+            const tr = trackH.getBoundingClientRect();
+            const cw = boardStage.clientWidth;
+            const sw = boardStage.scrollWidth;
+            const maxScrollL = Math.max(0, sw - cw);
+            const thumbW = thumbH.getBoundingClientRect().width;
+            const trackW = tr.width;
+            const maxX = Math.max(0, trackW - thumbW);
+            const nx = Math.max(0, Math.min(maxX, e.clientX - tr.left - thumbW / 2));
+            const ratio = maxX ? nx / maxX : 0;
+            boardStage.scrollLeft = Math.round(ratio * maxScrollL);
+          });
+        }
+
+        const trackV = scrollbarV && scrollbarV.querySelector('.track');
+        if (trackV) {
+          trackV.addEventListener('pointerdown', (e) => {
+            if (e.target === thumbV) return;
+            const tr = trackV.getBoundingClientRect();
+            const ch = boardStage.clientHeight;
+            const sh = boardStage.scrollHeight;
+            const maxScrollT = Math.max(0, sh - ch);
+            const thumbHgt = thumbV.getBoundingClientRect().height;
+            const trackHt = tr.height;
+            const maxY = Math.max(0, trackHt - thumbHgt);
+            const ny = Math.max(0, Math.min(maxY, e.clientY - tr.top - thumbHgt / 2));
+            const ratio = maxY ? ny / maxY : 0;
+            boardStage.scrollTop = Math.round(ratio * maxScrollT);
+          });
+        }
+      }
+
       window.addEventListener('resize', () => {
         requestAnimationFrame(resizeCanvas);
         requestAnimationFrame(updateBoardStageHeight);
+        requestAnimationFrame(updateScrollbarLayout);
+        requestAnimationFrame(updateCustomScrollbars);
       });
-      document.addEventListener('fullscreenchange', updateBoardStageHeight);
-      boardShell.addEventListener('fullscreenchange', updateBoardStageHeight);
+      document.addEventListener('fullscreenchange', () => {
+        updateBoardStageHeight();
+        updateScrollbarLayout();
+        updateCustomScrollbars();
+      });
+      boardShell.addEventListener('fullscreenchange', () => {
+        updateBoardStageHeight();
+        updateScrollbarLayout();
+        updateCustomScrollbars();
+      });
+      boardStage.addEventListener('scroll', updateCustomScrollbars, { passive: true });
+      if (window.ResizeObserver) {
+        const ro1 = new ResizeObserver(() => { updateScrollbarLayout(); updateCustomScrollbars(); });
+        ro1.observe(boardStage);
+        const ro2 = new ResizeObserver(() => { updateScrollbarLayout(); updateCustomScrollbars(); });
+        ro2.observe(canvasElement);
+      }
       
       resizeCanvas();
       updateCanvasSizeDisplay();
       updateBoardStageHeight();
+      updateScrollbarLayout();
+      setupScrollbarDragging();
+      updateCustomScrollbars();
 
       function clampZoom(z) {
         return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
@@ -1763,6 +1963,7 @@
         document.getElementById('canvasWidth').value = Math.round(newWidth);
         document.getElementById('canvasHeight').value = Math.round(newHeight);
         
+        updateCustomScrollbars();
         showToast('画布已自动调整至容器大小');
       }
 
