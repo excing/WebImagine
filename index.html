@@ -421,7 +421,7 @@
     .brush-control input[type="color"] {
       border: none;
       width: 32px;
-      height: 20px;
+      height: 24px;
       padding: 0;
       background: none;
       cursor: pointer;
@@ -480,10 +480,9 @@
     }
 
     .zoom-control input[type="range"] {
-      width: 160px;
+      width: 120px;
       height: 4px;
       cursor: pointer;
-      margin: 0 8px;
       border: none;
       background: none;
     }
@@ -891,7 +890,7 @@
                 <input type="range" min="0" max="100" step="1" value="0" id="zoomRange" aria-label="缩放滑条" />
                 <input type="number" min="10" max="1000" value="100" id="zoomNumber" aria-label="缩放数值(%)" />
               </div>
-              <button class="action-button" type="button" data-action="fit-content" aria-label="定位内容" title="将画面缩放并定位到全部内容">定位内容</button>
+              <button class="action-button" type="button" data-action="fit-content" aria-label="定位内容" title="将画面缩放并定位到全部内容">定位</button>
             </div>
           </div>
           <div class="toolbar-row">
@@ -930,7 +929,7 @@
                   <input type="range" min="0" max="100" step="1" value="0" id="zoomRangeMobile" aria-label="缩放滑条" />
                   <input type="number" min="10" max="1000" value="100" id="zoomNumberMobile" aria-label="缩放数值(%)" />
                 </div>
-                <button class="action-button" type="button" data-action="fit-content-mobile">定位内容</button>
+                <button class="action-button" type="button" data-action="fit-content-mobile">定位</button>
               </div>
 
             </div>
@@ -941,6 +940,7 @@
                   <input type="file" id="imageInputMobile" accept="image/*" multiple hidden>
                 </label>
                 <button class="action-button" type="button" data-action="duplicate-mobile">复制图层</button>
+                <button class="action-button" type="button" data-action="delete-mobile">删除所选</button>
                 <button class="action-button" type="button" data-action="toggle-snap-mobile">吸附</button>
                 <div class="arrange-control" style="margin-bottom: 12px;">
                   <input type="number" min="0" max="100" value="0" id="gapXMobile" aria-label="排列X间距" placeholder="X" title="图片水平间距" />
@@ -1733,6 +1733,20 @@
         });
       }
 
+      function deleteActiveObjects() {
+        const activeObjects = canvas.getActiveObjects();
+        if (!activeObjects.length) {
+          showToast('请选择要删除的对象');
+          return;
+        }
+        activeObjects.forEach(obj => canvas.remove(obj));
+        canvas.discardActiveObject();
+        canvas.renderAll();
+        saveHistory();
+        showToast('已删除选中对象');
+        mobileMenu?.classList.remove('show');
+      }
+
       function toggleFullscreen() {
         if (document.fullscreenElement) {
           document.exitFullscreen();
@@ -1839,6 +1853,7 @@
       });
       document.querySelector('[data-action="export-mobile"]')?.addEventListener('click', () => exportCanvas());
       document.querySelector('[data-action="duplicate-mobile"]')?.addEventListener('click', () => duplicateObject());
+      document.querySelector('[data-action="delete-mobile"]')?.addEventListener('click', () => deleteActiveObjects());
       document.querySelector('[data-action="fullscreen-mobile"]')?.addEventListener('click', () => toggleFullscreen());
       document.querySelector('[data-action="reset-mobile"]')?.addEventListener('click', () => resetCanvas());
       document.querySelector('[data-action="fit-content-mobile"]')?.addEventListener('click', () => fitContentView());
