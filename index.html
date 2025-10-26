@@ -360,56 +360,6 @@
       background: rgba(37, 99, 235, 0.08);
     }
 
-    .canvas-size-control {
-      display: inline-flex;
-      align-items: center;
-      gap: 0;
-      border-radius: 10px;
-      border: 1px solid rgba(148, 163, 184, 0.35);
-      overflow: hidden;
-      background: rgba(255, 255, 255, 0.92);
-      height: 36px;
-    }
-
-    .canvas-size-control input[type="number"] {
-      border: none;
-      height: 36px;
-      padding: 0 10px;
-      background: transparent;
-      color: var(--text);
-      font-size: 0.85rem;
-      text-align: center;
-      border-right: 1px solid rgba(148, 163, 184, 0.2);
-      width: 70px;
-    }
-
-    .canvas-size-control input[type="number"]:last-of-type {
-      width: 70px;
-    }
-
-    .canvas-size-control input[type="number"]::placeholder {
-      color: var(--text-muted);
-      opacity: 0.6;
-    }
-
-    .canvas-size-control input[type="number"]:focus {
-      outline: none;
-      background: rgba(37, 99, 235, 0.08);
-    }
-
-    .canvas-size-control .action-button {
-      border: none;
-      border-radius: 0;
-      background: transparent;
-      border-left: 1px solid rgba(148, 163, 184, 0.2);
-      height: 36px;
-      padding: 0 12px;
-    }
-
-    .canvas-size-control .action-button:hover {
-      background: rgba(37, 99, 235, 0.08);
-    }
-
     .history-control {
       display: inline-flex;
       align-items: center;
@@ -580,9 +530,7 @@
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
-      overflow: auto;
-      -ms-overflow-style: none; /* IE/Edge 旧版隐藏滚动条 */
-      scrollbar-width: none; /* Firefox 隐藏滚动条 */
+      overflow: hidden; /* 视口驱动：不使用容器滚动 */
       padding: 16px;
     }
 
@@ -866,21 +814,7 @@
       overscroll-behavior: contain;
     }
 
-    /* 隐藏原生滚动条（使用自定义叠加滚动条） */
-    .board-stage::-webkit-scrollbar { width: 0; height: 0; }
-    .board-stage::-webkit-scrollbar-track { background: transparent; }
-    .board-stage::-webkit-scrollbar-thumb { background: transparent; border: none; }
-    .board-stage::-webkit-scrollbar-corner { background: transparent; }
-
-    /* 自定义叠加滚动条，仅作用于画布容器 */
-    .custom-scrollbar { position: absolute; z-index: 5; user-select: none; touch-action: none; }
-    .custom-scrollbar.h { height: 16px; }
-    .custom-scrollbar.v { width: 16px; }
-    .custom-scrollbar .track { position: relative; width: 100%; height: 100%; background: #e6eaf3; border-radius: 8px; }
-    .custom-scrollbar .thumb { position: absolute; background: var(--primary); border-radius: 8px; }
-    .custom-scrollbar.h .thumb { height: 100%; min-width: 24px; }
-    .custom-scrollbar.v .thumb { width: 100%; min-height: 24px; }
-    .custom-scrollbar .thumb:hover { background: var(--primary-dark); }
+    /* 视口驱动：不需要原生或自定义滚动条 */
 
   </style>
 </head>
@@ -945,10 +879,13 @@
                 <input type="number" min="1" max="60" value="4" id="brushSizeNumber" aria-label="画笔粗细数值" />
               </div>
             </div>
-            <div class="canvas-size-control" title="画布尺寸">
-              <input type="number" min="1920" value="0" id="canvasWidth" aria-label="画布宽度" placeholder="宽" />
-              <input type="number" min="1080" value="0" id="canvasHeight" aria-label="画布高度" placeholder="高" />
-              <button class="action-button" type="button" data-action="auto-fit" aria-label="自动调整画布大小">自动调整</button>
+            <div class="control" title="背景">
+              <span class="btn-text">背景</span>
+              <select id="bgMode" aria-label="背景模式" style="border:none;background:transparent;padding:4px 6px;outline:none;">
+                <option value="solid">纯色</option>
+                <option value="transparent">透明</option>
+              </select>
+              <input type="color" value="#ffffff" id="bgColor" aria-label="背景颜色" />
             </div>
             <div class="zoom-control" title="缩放和定位">
               <span>缩放</span>
@@ -989,11 +926,6 @@
                   <input type="number" min="1" max="60" value="8" id="brushSizeNumberMobile" aria-label="画笔粗细数值" />
                 </div>
               </div>
-              <div class="canvas-size-control" style="margin-bottom: 12px;">
-                <input type="number" min="240" value="0" id="canvasWidthMobile" aria-label="画布宽度" placeholder="宽" />
-                <input type="number" min="240" value="0" id="canvasHeightMobile" aria-label="画布高度" placeholder="高" />
-                <button class="action-button" type="button" data-action="auto-fit-mobile">自动调整</button>
-              </div>
               <div class="zoom-control">
                 <span style="white-space: nowrap; padding: 0 8px;">缩放</span>
                 <div class="zoom-inputs" style="flex: 1;">
@@ -1033,12 +965,6 @@
             <div class="drop-hint" id="dropHint">拖拽图片到这里，自动导入并排版</div>
           </div>
         </div>
-        <div class="custom-scrollbar h" id="scrollbarH" role="scrollbar" aria-controls="boardStage" aria-orientation="horizontal">
-          <div class="track"><div class="thumb" id="scrollbarHThumb"></div></div>
-        </div>
-        <div class="custom-scrollbar v" id="scrollbarV" role="scrollbar" aria-controls="boardStage" aria-orientation="vertical">
-          <div class="track"><div class="thumb" id="scrollbarVThumb"></div></div>
-        </div>
       </div>
     </section>
   </main>
@@ -1077,6 +1003,12 @@
           <div style="font-size:0.85rem;color:var(--text-muted);margin-top:4px;">最高质量，文件最大</div>
         </button>
       </div>
+          <div style="display:flex;gap:8px;align-items:center;margin:8px 0 4px 0;">
+            <input type="number" min="16" id="exportWidth" placeholder="宽(px)" aria-label="导出宽度" style="width:120px;padding:8px 10px;border-radius:10px;border:1px solid rgba(148,163,184,0.45);" />
+            <span style="opacity:0.6;">×</span>
+            <input type="number" min="16" id="exportHeight" placeholder="高(px)" aria-label="导出高度" style="width:120px;padding:8px 10px;border-radius:10px;border:1px solid rgba(148,163,184,0.45);" />
+            <button type="button" class="action-button" data-action="confirm-export-size" aria-label="按尺寸导出">自动</button>
+          </div>
       <div class="dialog-actions">
         <button type="button" class="flat-button" data-action="cancel-export">取消</button>
       </div>
@@ -1105,8 +1037,6 @@
       // Mobile controls
       const colorPickerMobile = document.getElementById('colorPickerMobile');
       const brushSizeMobile = document.getElementById('brushSizeMobile');
-      const canvasWidthMobile = document.getElementById('canvasWidthMobile');
-      const canvasHeightMobile = document.getElementById('canvasHeightMobile');
       const imageInputMobile = document.getElementById('imageInputMobile');
       
       // Brush size number inputs
@@ -1221,44 +1151,13 @@
       }
 
       function resizeCanvas() {
-        const canvasWidthInput = document.getElementById('canvasWidth');
-        const canvasHeightInput = document.getElementById('canvasHeight');
-        
-        let width, height;
-        
-        if (canvasWidthInput.value === '' || canvasWidthInput.value === '0') {
-          const rect = boardStage.getBoundingClientRect();
-          width = Math.max(rect.width - 32, 240);
-        } else {
-          width = Math.max(parseInt(canvasWidthInput.value, 10), 240);
-        }
-        
-        if (canvasHeightInput.value === '' || canvasHeightInput.value === '0') {
-          const rect = boardStage.getBoundingClientRect();
-          height = Math.max(rect.height - 32, 240);
-        } else {
-          height = Math.max(parseInt(canvasHeightInput.value, 10), 240);
-        }
-        
+        const rect = boardStage.getBoundingClientRect();
+        const width = Math.max(rect.width - 32, 240);
+        const height = Math.max(rect.height - 32, 240);
         canvas.setWidth(width);
         canvas.setHeight(height);
         canvas.calcOffset();
         canvas.renderAll();
-        updateCustomScrollbars();
-      }
-
-      function updateCanvasSizeDisplay() {
-        const canvasWidthInput = document.getElementById('canvasWidth');
-        const canvasHeightInput = document.getElementById('canvasHeight');
-        
-        if (canvasWidthInput.value === '' || canvasWidthInput.value === '0') {
-          canvasWidthInput.placeholder = Math.round(canvas.getWidth()).toString();
-          canvasWidthInput.value = Math.round(canvas.getWidth());
-        }
-        if (canvasHeightInput.value === '' || canvasHeightInput.value === '0') {
-          canvasHeightInput.placeholder = Math.round(canvas.getHeight()).toString();
-          canvasHeightInput.value = Math.round(canvas.getHeight());
-        }
       }
 
       function updateBoardStageHeight() {
@@ -1281,190 +1180,37 @@
       }
 
       // 自定义叠加滚动条
-      const scrollbarH = document.getElementById('scrollbarH');
-      const scrollbarV = document.getElementById('scrollbarV');
-      const thumbH = document.getElementById('scrollbarHThumb');
-      const thumbV = document.getElementById('scrollbarVThumb');
+      // 视口驱动模式：无需自定义滚动条
 
-      function updateScrollbarLayout() {
-        if (!scrollbarH || !scrollbarV) return;
-        const shellRect = boardShell.getBoundingClientRect();
-        const stageRect = boardStage.getBoundingClientRect();
-        const left = Math.max(0, Math.round(stageRect.left - shellRect.left));
-        const right = Math.max(0, Math.round(shellRect.right - stageRect.right));
-        const top = Math.max(0, Math.round(stageRect.top - shellRect.top));
-        const bottom = Math.max(0, Math.round(shellRect.bottom - stageRect.bottom));
-        // 水平条贴合 stage 底部，沿左右内边距对齐
-        scrollbarH.style.left = left + 'px';
-        scrollbarH.style.right = right + 'px';
-        scrollbarH.style.bottom = bottom + 'px';
-        // 垂直条贴合 stage 右侧，沿上下内边距对齐
-        scrollbarV.style.top = top + 'px';
-        scrollbarV.style.bottom = bottom + 'px';
-        scrollbarV.style.right = right + 'px';
-      }
-
-      function updateCustomScrollbars() {
-        if (!scrollbarH || !scrollbarV || !thumbH || !thumbV) return;
-        const cw = boardStage.clientWidth;
-        const ch = boardStage.clientHeight;
-        const sw = boardStage.scrollWidth;
-        const sh = boardStage.scrollHeight;
-        {
-          const track = scrollbarH.querySelector('.track');
-          const trackW = track.clientWidth;
-          const minW = 24;
-          const w = Math.max(minW, Math.round(cw / Math.max(sw, 1) * trackW));
-          thumbH.style.width = w + 'px';
-          const maxThumbX = Math.max(0, trackW - w);
-          const maxScrollL = Math.max(0, sw - cw);
-          const x = maxScrollL ? Math.round(boardStage.scrollLeft / maxScrollL * maxThumbX) : 0;
-          thumbH.style.transform = `translateX(${x}px)`;
-          scrollbarH.setAttribute('aria-valuemin', '0');
-          scrollbarH.setAttribute('aria-valuemax', String(maxScrollL));
-          scrollbarH.setAttribute('aria-valuenow', String(boardStage.scrollLeft));
-        }
-        {
-          const track = scrollbarV.querySelector('.track');
-          const trackH = track.clientHeight;
-          const minH = 24;
-          const h = Math.max(minH, Math.round(ch / Math.max(sh, 1) * trackH));
-          thumbV.style.height = h + 'px';
-          const maxThumbY = Math.max(0, trackH - h);
-          const maxScrollT = Math.max(0, sh - ch);
-          const y = maxScrollT ? Math.round(boardStage.scrollTop / maxScrollT * maxThumbY) : 0;
-          thumbV.style.transform = `translateY(${y}px)`;
-          scrollbarV.setAttribute('aria-valuemin', '0');
-          scrollbarV.setAttribute('aria-valuemax', String(maxScrollT));
-          scrollbarV.setAttribute('aria-valuenow', String(boardStage.scrollTop));
-        }
-      }
-
-      function setupScrollbarDragging() {
-        if (thumbH) {
-          thumbH.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            const track = scrollbarH.querySelector('.track');
-            const tr = track.getBoundingClientRect();
-            const th = thumbH.getBoundingClientRect();
-            const startX = e.clientX;
-            const startThumbX = th.left - tr.left;
-            const cw = boardStage.clientWidth;
-            const sw = boardStage.scrollWidth;
-            const maxScrollL = Math.max(0, sw - cw);
-            const trackW = tr.width;
-            const thumbW = th.width;
-            const maxX = Math.max(0, trackW - thumbW);
-            function move(ev) {
-              const dx = ev.clientX - startX;
-              const nx = Math.max(0, Math.min(maxX, startThumbX + dx));
-              const ratio = maxX ? nx / maxX : 0;
-              boardStage.scrollLeft = Math.round(ratio * maxScrollL);
-            }
-            function up() {
-              window.removeEventListener('pointermove', move);
-              window.removeEventListener('pointerup', up);
-            }
-            window.addEventListener('pointermove', move);
-            window.addEventListener('pointerup', up, { once: true });
-            thumbH.setPointerCapture && thumbH.setPointerCapture(e.pointerId);
-          });
-        }
-        if (thumbV) {
-          thumbV.addEventListener('pointerdown', (e) => {
-            e.preventDefault();
-            const track = scrollbarV.querySelector('.track');
-            const tr = track.getBoundingClientRect();
-            const th = thumbV.getBoundingClientRect();
-            const startY = e.clientY;
-            const startThumbY = th.top - tr.top;
-            const ch = boardStage.clientHeight;
-            const sh = boardStage.scrollHeight;
-            const maxScrollT = Math.max(0, sh - ch);
-            const trackH = tr.height;
-            const thumbHgt = th.height;
-            const maxY = Math.max(0, trackH - thumbHgt);
-            function move(ev) {
-              const dy = ev.clientY - startY;
-              const ny = Math.max(0, Math.min(maxY, startThumbY + dy));
-              const ratio = maxY ? ny / maxY : 0;
-              boardStage.scrollTop = Math.round(ratio * maxScrollT);
-            }
-            function up() {
-              window.removeEventListener('pointermove', move);
-              window.removeEventListener('pointerup', up);
-            }
-            window.addEventListener('pointermove', move);
-            window.addEventListener('pointerup', up, { once: true });
-            thumbV.setPointerCapture && thumbV.setPointerCapture(e.pointerId);
-          });
-        }
-
-        const trackH = scrollbarH && scrollbarH.querySelector('.track');
-        if (trackH) {
-          trackH.addEventListener('pointerdown', (e) => {
-            if (e.target === thumbH) return;
-            const tr = trackH.getBoundingClientRect();
-            const cw = boardStage.clientWidth;
-            const sw = boardStage.scrollWidth;
-            const maxScrollL = Math.max(0, sw - cw);
-            const thumbW = thumbH.getBoundingClientRect().width;
-            const trackW = tr.width;
-            const maxX = Math.max(0, trackW - thumbW);
-            const nx = Math.max(0, Math.min(maxX, e.clientX - tr.left - thumbW / 2));
-            const ratio = maxX ? nx / maxX : 0;
-            boardStage.scrollLeft = Math.round(ratio * maxScrollL);
-          });
-        }
-
-        const trackV = scrollbarV && scrollbarV.querySelector('.track');
-        if (trackV) {
-          trackV.addEventListener('pointerdown', (e) => {
-            if (e.target === thumbV) return;
-            const tr = trackV.getBoundingClientRect();
-            const ch = boardStage.clientHeight;
-            const sh = boardStage.scrollHeight;
-            const maxScrollT = Math.max(0, sh - ch);
-            const thumbHgt = thumbV.getBoundingClientRect().height;
-            const trackHt = tr.height;
-            const maxY = Math.max(0, trackHt - thumbHgt);
-            const ny = Math.max(0, Math.min(maxY, e.clientY - tr.top - thumbHgt / 2));
-            const ratio = maxY ? ny / maxY : 0;
-            boardStage.scrollTop = Math.round(ratio * maxScrollT);
-          });
-        }
-      }
-
+      // 先更新容器高度，再下一帧基于实际尺寸调整画布
       window.addEventListener('resize', () => {
-        requestAnimationFrame(resizeCanvas);
-        requestAnimationFrame(updateBoardStageHeight);
-        requestAnimationFrame(updateScrollbarLayout);
-        requestAnimationFrame(updateCustomScrollbars);
+        updateBoardStageHeight();
+        requestAnimationFrame(() => requestAnimationFrame(resizeCanvas));
       });
       document.addEventListener('fullscreenchange', () => {
         updateBoardStageHeight();
-        updateScrollbarLayout();
-        updateCustomScrollbars();
+        requestAnimationFrame(() => requestAnimationFrame(resizeCanvas));
       });
       boardShell.addEventListener('fullscreenchange', () => {
         updateBoardStageHeight();
-        updateScrollbarLayout();
-        updateCustomScrollbars();
+        requestAnimationFrame(() => requestAnimationFrame(resizeCanvas));
       });
-      boardStage.addEventListener('scroll', updateCustomScrollbars, { passive: true });
+      // 移动端方向变更
+      window.addEventListener('orientationchange', () => {
+        updateBoardStageHeight();
+        requestAnimationFrame(() => requestAnimationFrame(resizeCanvas));
+      });
+
+      // 观察容器尺寸变化，自动调整画布
       if (window.ResizeObserver) {
-        const ro1 = new ResizeObserver(() => { updateScrollbarLayout(); updateCustomScrollbars(); });
-        ro1.observe(boardStage);
-        const ro2 = new ResizeObserver(() => { updateScrollbarLayout(); updateCustomScrollbars(); });
-        ro2.observe(canvasElement);
+        const ro = new ResizeObserver(() => {
+          requestAnimationFrame(resizeCanvas);
+        });
+        ro.observe(boardStage);
       }
       
-      resizeCanvas();
-      updateCanvasSizeDisplay();
       updateBoardStageHeight();
-      updateScrollbarLayout();
-      setupScrollbarDragging();
-      updateCustomScrollbars();
+      resizeCanvas();
 
       function clampZoom(z) {
         return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
@@ -1527,7 +1273,6 @@
           canvas.renderAll();
           history.isRestoring = false;
           updateHistoryButtons();
-          updateCanvasSizeDisplay();
         });
       }
 
@@ -1610,6 +1355,30 @@
         if (canvas.isDrawingMode) {
           canvas.freeDrawingBrush.width = parseInt(brushSizeInput.value, 10) || 8;
         }
+      }
+
+      // 背景设置（透明/纯色）
+      const bgMode = document.getElementById('bgMode');
+      const bgColor = document.getElementById('bgColor');
+      if (bgMode && bgColor) {
+        // 初始化：同步到当前画布背景
+        const initialIsTransparent = !canvas.backgroundColor || canvas.backgroundColor === 'transparent';
+        bgMode.value = initialIsTransparent ? 'transparent' : 'solid';
+        if (!initialIsTransparent && typeof canvas.backgroundColor === 'string') {
+          try { bgColor.value = hexFromColor(canvas.backgroundColor); } catch {}
+        }
+        bgMode.addEventListener('change', () => {
+          if (bgMode.value === 'transparent') {
+            canvas.setBackgroundColor(null, canvas.renderAll.bind(canvas));
+          } else {
+            canvas.setBackgroundColor(bgColor.value || '#ffffff', canvas.renderAll.bind(canvas));
+          }
+        });
+        bgColor.addEventListener('input', () => {
+          if (bgMode.value === 'solid') {
+            canvas.setBackgroundColor(bgColor.value || '#ffffff', canvas.renderAll.bind(canvas));
+          }
+        });
       }
 
       function hexFromColor(color) {
@@ -1848,8 +1617,8 @@
 
       function fitContentView() {
         const bounds = getContentBoundsRaw();
-        const vw = canvas.getWidth();
-        const vh = canvas.getHeight();
+        const vw = boardStage.clientWidth - 32; // 与 resizeCanvas 逻辑一致
+        const vh = boardStage.clientHeight - 32;
         if (!bounds || !isFinite(bounds.width) || !isFinite(bounds.height) || bounds.width <= 0 || bounds.height <= 0) {
           canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
           updateZoomInputs();
@@ -1908,9 +1677,44 @@
         showToast('PNG 导出完成');
       }
 
-      function exportCanvas() {
-        openExportDialog();
+      function performExportWithSize(targetW, targetH) {
+        const objects = canvas.getObjects();
+        if (!objects.length) { showToast('画布为空，无可导出的内容'); return; }
+        const b = getContentBoundsRaw();
+        if (!b || b.width <= 0 || b.height <= 0) { showToast('无可导出的内容'); return; }
+        const TW = Math.max(16, Number(targetW) || 0);
+        const TH = Math.max(16, Number(targetH) || 0);
+        if (!TW || !TH) { showToast('请输入有效的导出尺寸'); return; }
+        const cx = b.left + b.width / 2;
+        const cy = b.top + b.height / 2;
+        const aspectTarget = TW / TH;
+        const aspectContent = b.width / b.height;
+        let cropW, cropH;
+        if (aspectTarget >= aspectContent) {
+          cropH = b.height;
+          cropW = b.height * aspectTarget;
+        } else {
+          cropW = b.width;
+          cropH = b.width / aspectTarget;
+        }
+        const left = cx - cropW / 2;
+        const top = cy - cropH / 2;
+        const multiplier = TW / cropW; // 保证输出精确为 targetW×targetH
+        const dataUrl = canvas.toDataURL({
+          format: 'png',
+          left, top, width: cropW, height: cropH,
+          multiplier,
+          enableRetinaScaling: true
+        });
+        const link = document.createElement('a');
+        link.download = `webimagine-${TW}x${TH}-${Date.now()}.png`;
+        link.href = dataUrl;
+        link.click();
+        closeExportDialog();
+        showToast('PNG 导出完成');
       }
+
+      function exportCanvas() { openExportDialog(); }
 
       function duplicateObject() {
         const active = canvas.getActiveObject();
@@ -1950,21 +1754,8 @@
       }
 
       function autoFitCanvas() {
-        const stageRect = boardStage.getBoundingClientRect();
-        const padding = 32;
-        const newWidth = Math.max(stageRect.width - padding, 240);
-        const newHeight = Math.max(stageRect.height - padding, 240);
-        
-        canvas.setWidth(newWidth);
-        canvas.setHeight(newHeight);
-        canvas.calcOffset();
-        canvas.renderAll();
-        
-        document.getElementById('canvasWidth').value = Math.round(newWidth);
-        document.getElementById('canvasHeight').value = Math.round(newHeight);
-        
-        updateCustomScrollbars();
-        showToast('画布已自动调整至容器大小');
+        resizeCanvas();
+        showToast('视口已匹配容器');
       }
 
       function toggleMobileMenu() {
@@ -1975,8 +1766,6 @@
         if (colorPickerMobile) colorPickerMobile.value = colorPicker.value;
         if (brushSizeMobile) brushSizeMobile.value = brushSizeInput.value;
         if (brushSizeNumberMobile) brushSizeNumberMobile.value = brushSizeNumber.value;
-        if (canvasWidthMobile) canvasWidthMobile.value = document.getElementById('canvasWidth').value;
-        if (canvasHeightMobile) canvasHeightMobile.value = document.getElementById('canvasHeight').value;
         document.getElementById('gapXMobile').value = document.getElementById('gapX').value;
         document.getElementById('gapYMobile').value = document.getElementById('gapY').value;
         const p = Math.round((canvas.getZoom() || 1) * 100);
@@ -1989,8 +1778,6 @@
         if (colorPickerMobile) colorPicker.value = colorPickerMobile.value;
         if (brushSizeMobile) brushSizeInput.value = brushSizeMobile.value;
         if (brushSizeNumberMobile) brushSizeNumber.value = brushSizeNumberMobile.value;
-        if (canvasWidthMobile) document.getElementById('canvasWidth').value = canvasWidthMobile.value;
-        if (canvasHeightMobile) document.getElementById('canvasHeight').value = canvasHeightMobile.value;
         document.getElementById('gapX').value = document.getElementById('gapXMobile').value;
         document.getElementById('gapY').value = document.getElementById('gapYMobile').value;
         if (zoomRangeMobile) {
@@ -2027,7 +1814,6 @@
       document.querySelector('[data-action="duplicate"]').addEventListener('click', () => duplicateObject());
       document.querySelector('[data-action="fullscreen"]').addEventListener('click', () => toggleFullscreen());
       document.querySelector('[data-action="reset"]').addEventListener('click', () => resetCanvas());
-      document.querySelector('[data-action="auto-fit"]').addEventListener('click', () => autoFitCanvas());
       document.querySelector('[data-action="fit-content"]').addEventListener('click', () => fitContentView());
       
       // Mobile menu toggle
@@ -2056,10 +1842,6 @@
       document.querySelector('[data-action="duplicate-mobile"]')?.addEventListener('click', () => duplicateObject());
       document.querySelector('[data-action="fullscreen-mobile"]')?.addEventListener('click', () => toggleFullscreen());
       document.querySelector('[data-action="reset-mobile"]')?.addEventListener('click', () => resetCanvas());
-      document.querySelector('[data-action="auto-fit-mobile"]')?.addEventListener('click', () => {
-        syncDesktopControls();
-        resizeCanvas();
-      });
       document.querySelector('[data-action="fit-content-mobile"]')?.addEventListener('click', () => fitContentView());
       
       // Sync mobile controls with desktop
@@ -2116,14 +1898,6 @@
         ensureBrushSettings();
       });
       
-      canvasWidthMobile?.addEventListener('input', () => {
-        document.getElementById('canvasWidth').value = canvasWidthMobile.value;
-      });
-      
-      canvasHeightMobile?.addEventListener('input', () => {
-        document.getElementById('canvasHeight').value = canvasHeightMobile.value;
-      });
-      
       imageInputMobile?.addEventListener('change', (event) => {
         handleFiles(event.target.files);
         imageInputMobile.value = '';
@@ -2153,6 +1927,12 @@
       });
 
       document.querySelector('[data-action="cancel-export"]').addEventListener('click', () => closeExportDialog());
+
+      document.querySelector('[data-action="confirm-export-size"]').addEventListener('click', () => {
+        const wEl = document.getElementById('exportWidth');
+        const hEl = document.getElementById('exportHeight');
+        performExportWithSize(Number(wEl.value || 0), Number(hEl.value || 0));
+      });
 
       exportPanel.addEventListener('click', (event) => {
         if (event.target === exportPanel) {
@@ -2207,14 +1987,6 @@
         zoomNumber.value = p;
         zoomRange.value = s;
         zoomToPercent(p);
-      });
-
-      document.getElementById('canvasWidth').addEventListener('input', () => {
-        resizeCanvas();
-      });
-
-      document.getElementById('canvasHeight').addEventListener('input', () => {
-        resizeCanvas();
       });
 
       boardStage.addEventListener('dragover', (event) => {
