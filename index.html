@@ -537,7 +537,7 @@
 
     canvas#board {
       display: block;
-      background: #ffffff;
+      background: transparent;
       box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
       border-radius: 16px;
       flex-shrink: 0;
@@ -1667,13 +1667,28 @@
           exportOptions.height = bounds.height;
         }
         
-        const dataUrl = canvas.toDataURL(exportOptions);
-        const link = document.createElement('a');
-        link.download = `webimagine-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-        closeExportDialog();
-        showToast('PNG 导出完成');
+        const needTransparent = bgMode && bgMode.value === 'transparent';
+        const prevBg = canvas.backgroundColor;
+        const doExport = () => {
+          const dataUrl = canvas.toDataURL(exportOptions);
+          const link = document.createElement('a');
+          link.download = `webimagine-${Date.now()}.png`;
+          link.href = dataUrl;
+          link.click();
+          if (needTransparent) {
+            canvas.setBackgroundColor(prevBg || null, canvas.renderAll.bind(canvas));
+          }
+          closeExportDialog();
+          showToast('PNG 导出完成');
+        };
+        if (needTransparent) {
+          canvas.setBackgroundColor(null, () => {
+            canvas.renderAll();
+            doExport();
+          });
+        } else {
+          doExport();
+        }
       }
 
       function performExportWithSize(targetW, targetH) {
@@ -1699,18 +1714,34 @@
         const left = cx - cropW / 2;
         const top = cy - cropH / 2;
         const multiplier = TW / cropW; // 保证输出精确为 targetW×targetH
-        const dataUrl = canvas.toDataURL({
+        const options = {
           format: 'png',
           left, top, width: cropW, height: cropH,
           multiplier,
           enableRetinaScaling: true
-        });
-        const link = document.createElement('a');
-        link.download = `webimagine-${TW}x${TH}-${Date.now()}.png`;
-        link.href = dataUrl;
-        link.click();
-        closeExportDialog();
-        showToast('PNG 导出完成');
+        };
+        const needTransparent = bgMode && bgMode.value === 'transparent';
+        const prevBg = canvas.backgroundColor;
+        const doExportSized = () => {
+          const dataUrl = canvas.toDataURL(options);
+          const link = document.createElement('a');
+          link.download = `webimagine-${TW}x${TH}-${Date.now()}.png`;
+          link.href = dataUrl;
+          link.click();
+          if (needTransparent) {
+            canvas.setBackgroundColor(prevBg || null, canvas.renderAll.bind(canvas));
+          }
+          closeExportDialog();
+          showToast('PNG 导出完成');
+        };
+        if (needTransparent) {
+          canvas.setBackgroundColor(null, () => {
+            canvas.renderAll();
+            doExportSized();
+          });
+        } else {
+          doExportSized();
+        }
       }
 
       function exportCanvas() { openExportDialog(); }
@@ -1761,7 +1792,11 @@
           return;
         }
         canvas.clear();
-        canvas.backgroundColor = '#ffffff';
+        const isTransparent = bgMode && bgMode.value === 'transparent';
+        canvas.setBackgroundColor(
+          isTransparent ? null : (bgColor?.value || '#ffffff'),
+          canvas.renderAll.bind(canvas)
+        );
         saveHistory();
         showToast('画布已清空');
       }
