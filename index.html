@@ -929,6 +929,14 @@
                   <input type="number" min="1" max="60" value="8" id="brushSizeNumberMobile" aria-label="画笔粗细数值" />
                 </div>
               </div>
+              <div class="control" title="背景" style="margin-bottom: 12px;">
+                <span class="btn-text">背景</span>
+                <select id="bgModeMobile" aria-label="背景模式（移动端）" style="border:none;background:transparent;padding:4px 6px;outline:none;">
+                  <option value="solid">纯色</option>
+                  <option value="transparent">透明</option>
+                </select>
+                <input type="color" value="#ffffff" id="bgColorMobile" aria-label="背景颜色（移动端）" />
+              </div>
               <div class="zoom-control">
                 <span style="white-space: nowrap; padding: 0 8px;">缩放</span>
                 <div class="zoom-inputs" style="flex: 1;">
@@ -1043,6 +1051,8 @@
       const colorPickerMobile = document.getElementById('colorPickerMobile');
       const brushSizeMobile = document.getElementById('brushSizeMobile');
       const imageInputMobile = document.getElementById('imageInputMobile');
+      const bgModeMobile = document.getElementById('bgModeMobile');
+      const bgColorMobile = document.getElementById('bgColorMobile');
       
       // Brush size number inputs
       const brushSizeNumber = document.getElementById('brushSizeNumber');
@@ -1379,10 +1389,16 @@
           } else {
             canvas.setBackgroundColor(bgColor.value || '#ffffff', canvas.renderAll.bind(canvas));
           }
+          if (typeof bgModeMobile !== 'undefined' && bgModeMobile) {
+            bgModeMobile.value = bgMode.value;
+          }
         });
         bgColor.addEventListener('input', () => {
           if (bgMode.value === 'solid') {
             canvas.setBackgroundColor(bgColor.value || '#ffffff', canvas.renderAll.bind(canvas));
+          }
+          if (typeof bgColorMobile !== 'undefined' && bgColorMobile) {
+            bgColorMobile.value = bgColor.value;
           }
         });
       }
@@ -1825,6 +1841,8 @@
         if (colorPickerMobile) colorPickerMobile.value = colorPicker.value;
         if (brushSizeMobile) brushSizeMobile.value = brushSizeInput.value;
         if (brushSizeNumberMobile) brushSizeNumberMobile.value = brushSizeNumber.value;
+        if (bgModeMobile && bgMode) bgModeMobile.value = bgMode.value;
+        if (bgColorMobile && bgColor) bgColorMobile.value = bgColor.value;
         document.getElementById('gapXMobile').value = document.getElementById('gapX').value;
         document.getElementById('gapYMobile').value = document.getElementById('gapY').value;
         const rowsEl = document.getElementById('rows');
@@ -1840,6 +1858,8 @@
         if (colorPickerMobile) colorPicker.value = colorPickerMobile.value;
         if (brushSizeMobile) brushSizeInput.value = brushSizeMobile.value;
         if (brushSizeNumberMobile) brushSizeNumber.value = brushSizeNumberMobile.value;
+        if (bgModeMobile && bgMode) bgMode.value = bgModeMobile.value;
+        if (bgColorMobile && bgColor) bgColor.value = bgColorMobile.value;
         document.getElementById('gapX').value = document.getElementById('gapXMobile').value;
         document.getElementById('gapY').value = document.getElementById('gapYMobile').value;
         const rowsEl = document.getElementById('rows');
@@ -1962,6 +1982,25 @@
         brushSizeInput.value = value;
         brushSizeNumber.value = value;
         ensureBrushSettings();
+      });
+      
+      // 背景（移动端）
+      bgModeMobile?.addEventListener('change', () => {
+        if (bgMode) bgMode.value = bgModeMobile.value;
+        if (bgModeMobile.value === 'transparent') {
+          canvas.setBackgroundColor(null, canvas.renderAll.bind(canvas));
+        } else {
+          const color = (bgColorMobile?.value || bgColor?.value || '#ffffff');
+          if (bgColor) bgColor.value = color;
+          canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
+        }
+      });
+      bgColorMobile?.addEventListener('input', () => {
+        const color = bgColorMobile.value || '#ffffff';
+        if (bgColor) bgColor.value = color;
+        if ((bgModeMobile && bgModeMobile.value === 'solid') || (bgMode && bgMode.value === 'solid')) {
+          canvas.setBackgroundColor(color, canvas.renderAll.bind(canvas));
+        }
       });
       
       imageInputMobile?.addEventListener('change', (event) => {
