@@ -907,6 +907,7 @@
             <div class="arrange-control">
               <input type="number" min="0" max="100" value="0" id="gapX" aria-label="排列X间距" placeholder="X" title="图片水平间距" />
               <input type="number" min="0" max="100" value="0" id="gapY" aria-label="排列Y间距" placeholder="Y" title="图片垂直间距" />
+              <input type="number" min="0" max="20" value="0" id="rows" aria-label="固定行数(0或1为自动换行)" placeholder="行数" title="固定行数（0/1=自动换行，≥2=固定行数）" />
               <button class="action-button" type="button" data-action="arrange">自动排列</button>
             </div>
             <button class="action-button" type="button" data-action="export">导出 PNG</button>
@@ -950,6 +951,7 @@
                 <div class="arrange-control" style="margin-bottom: 12px;">
                   <input type="number" min="0" max="100" value="0" id="gapXMobile" aria-label="排列X间距" placeholder="X" title="图片水平间距" />
                   <input type="number" min="0" max="100" value="0" id="gapYMobile" aria-label="排列Y间距" placeholder="Y" title="图片垂直间距" />
+                  <input type="number" min="0" max="20" value="0" id="rowsMobile" aria-label="固定行数(0或1为自动换行)" placeholder="行数" title="固定行数（0/1=自动换行，≥2=固定行数）" />
                   <button class="action-button" type="button" data-action="arrange-mobile">自动排列</button>
                 </div>
               </div>
@@ -1491,8 +1493,9 @@
           return;
         }
         const padding = 36;
-        const gapX = parseInt(document.getElementById('gapX').value, 10);
-        const rows = parseInt(document.getElementById('gapY').value, 10);
+        const gapX = parseInt(document.getElementById('gapX').value, 10) || 0;
+        const gapY = parseInt(document.getElementById('gapY').value, 10) || 0;
+        const rows = parseInt(document.getElementById('rows')?.value, 10) || 0;
         const canvasWidth = canvas.getWidth();
         const canvasHeight = canvas.getHeight();
 
@@ -1508,7 +1511,7 @@
 
             if (currentX + imgWidth + gapX > canvasWidth - padding) {
               currentX = padding;
-              currentY += rowHeight + gapX;
+              currentY += rowHeight + gapY;
               rowHeight = 0;
             }
 
@@ -1541,7 +1544,7 @@
           // 计算每行的起始 Y 坐标
           const rowYPositions = [padding];
           for (let i = 1; i < rows; i++) {
-            rowYPositions[i] = rowYPositions[i - 1] + rowHeights[i - 1] + gapX;
+            rowYPositions[i] = rowYPositions[i - 1] + rowHeights[i - 1] + gapY;
           }
 
           // 第二遍：设置每个图片的位置
@@ -1824,6 +1827,9 @@
         if (brushSizeNumberMobile) brushSizeNumberMobile.value = brushSizeNumber.value;
         document.getElementById('gapXMobile').value = document.getElementById('gapX').value;
         document.getElementById('gapYMobile').value = document.getElementById('gapY').value;
+        const rowsEl = document.getElementById('rows');
+        const rowsMobileEl = document.getElementById('rowsMobile');
+        if (rowsEl && rowsMobileEl) rowsMobileEl.value = rowsEl.value;
         const p = Math.round((canvas.getZoom() || 1) * 100);
         const s = percentToSlider(p);
         if (zoomRangeMobile) zoomRangeMobile.value = String(s);
@@ -1836,6 +1842,9 @@
         if (brushSizeNumberMobile) brushSizeNumber.value = brushSizeNumberMobile.value;
         document.getElementById('gapX').value = document.getElementById('gapXMobile').value;
         document.getElementById('gapY').value = document.getElementById('gapYMobile').value;
+        const rowsEl = document.getElementById('rows');
+        const rowsMobileEl = document.getElementById('rowsMobile');
+        if (rowsEl && rowsMobileEl) rowsEl.value = rowsMobileEl.value;
         if (zoomRangeMobile) {
           const s = Math.max(0, Math.min(100, parseInt(zoomRangeMobile.value, 10) || 0));
           const p = sliderToPercent(s);
