@@ -1576,53 +1576,56 @@
         showToast('图片已自动排列');
       }
 
-      function getContentBounds() {
-        const objects = canvas.getObjects();
+      function computeContentBounds(options) {
+        const onlyVisible = !(options && options.onlyVisible === false);
+        const includeStroke = !(options && options.includeStroke === false);
+        const objects = canvas.getObjects().filter(o => (onlyVisible ? o.visible !== false : true));
         if (!objects.length) return null;
-        
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        
-        objects.forEach(obj => {
-          const bounds = obj.getBoundingRect();
-          minX = Math.min(minX, bounds.left);
-          minY = Math.min(minY, bounds.top);
-          maxX = Math.max(maxX, bounds.left + bounds.width);
-          maxY = Math.max(maxY, bounds.top + bounds.height);
-        });
-        
-        const padding = 8;
-        return {
-          left: Math.max(0, minX - padding),
-          top: Math.max(0, minY - padding),
-          width: Math.min(canvas.getWidth(), maxX - minX + padding * 2),
-          height: Math.min(canvas.getHeight(), maxY - minY + padding * 2)
-        };
-      }
-
-      function getContentBoundsRaw() {
-        const objects = canvas.getObjects();
-        if (!objects.length) return null;
+        const prevVpt = (canvas.viewportTransform || [1, 0, 0, 1, 0, 0]).slice();
+        canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         objects.forEach(obj => {
-          const w = obj.getScaledWidth();
-          const h = obj.getScaledHeight();
-          const left = obj.left - w / 2;
-          const top = obj.top - h / 2;
-          const right = obj.left + w / 2;
-          const bottom = obj.top + h / 2;
-          minX = Math.min(minX, left);
-          minY = Math.min(minY, top);
-          maxX = Math.max(maxX, right);
-          maxY = Math.max(maxY, bottom);
+          obj.setCoords();
+          let r;
+          try {
+            r = obj.getBoundingRect({ absolute: true, includeStroke });
+          } catch (e1) {
+            try {
+              r = obj.getBoundingRect(true, true);
+            } catch (e2) {
+              r = obj.getBoundingRect();
+            }
+          }
+          minX = Math.min(minX, r.left);
+          minY = Math.min(minY, r.top);
+          maxX = Math.max(maxX, r.left + r.width);
+          maxY = Math.max(maxY, r.top + r.height);
         });
+        canvas.setViewportTransform(prevVpt);
         const padding = 16;
         return { left: minX - padding, top: minY - padding, width: (maxX - minX) + padding * 2, height: (maxY - minY) + padding * 2 };
       }
 
+      function getContentBounds() {
+        const b = computeContentBounds({ includeStroke: true, onlyVisible: true });
+        if (!b) return null;
+        const cw = canvas.getWidth();
+        const ch = canvas.getHeight();
+        const left = Math.max(0, b.left);
+        const top = Math.max(0, b.top);
+        const right = Math.min(cw, b.left + b.width);
+        const bottom = Math.min(ch, b.top + b.height);
+        return { left, top, width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+      }
+
+      function getContentBoundsRaw() {
+        return computeContentBounds({ includeStroke: true, onlyVisible: true });
+      }
+
       function fitContentView() {
         const bounds = getContentBoundsRaw();
-        const vw = boardStage.clientWidth - 32; // 与 resizeCanvas 逻辑一致
-        const vh = boardStage.clientHeight - 32;
+        const vw = canvas.getWidth();
+        const vh = canvas.getHeight();
         if (!bounds || !isFinite(bounds.width) || !isFinite(bounds.height) || bounds.width <= 0 || bounds.height <= 0) {
           canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
           updateZoomInputs();
