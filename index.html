@@ -1107,87 +1107,88 @@
 
       let currentBrushMode = 'brush';
       let snapEnabled = false;
-      const SNAP_THRESHOLD = 8;
-      const GRID_SIZE = 16;
+      const SNAP_PX = 8; // visual tolerance in screen pixels
 
       function calculateSnap(obj) {
         if (!snapEnabled || !obj) return;
+        const zoom = canvas.getZoom() || 1;
+        const tol = SNAP_PX / zoom;
 
-        const objBounds = {
-          left: obj.left - obj.getScaledWidth() / 2,
-          right: obj.left + obj.getScaledWidth() / 2,
-          top: obj.top - obj.getScaledHeight() / 2,
-          bottom: obj.top + obj.getScaledHeight() / 2,
-          centerX: obj.left,
-          centerY: obj.top
-        };
+        const objHalfW = (obj.getScaledWidth && obj.getScaledWidth() / 2) || 0;
+        const objHalfH = (obj.getScaledHeight && obj.getScaledHeight() / 2) || 0;
 
-        let snapX = obj.left;
-        let snapY = obj.top;
-        let snapDistX = SNAP_THRESHOLD;
-        let snapDistY = SNAP_THRESHOLD;
+        let bestLeft = obj.left;
+        let bestDx = tol;
+        let bestTop = obj.top;
+        let bestDy = tol;
 
-        // Snap to grid
-        const gridSnapX = Math.round(obj.left / GRID_SIZE) * GRID_SIZE;
-        const gridSnapY = Math.round(obj.top / GRID_SIZE) * GRID_SIZE;
-        const gridDistX = Math.abs(obj.left - gridSnapX);
-        const gridDistY = Math.abs(obj.top - gridSnapY);
-
-        if (gridDistX < snapDistX) {
-          snapX = gridSnapX;
-          snapDistX = gridDistX;
-        }
-        if (gridDistY < snapDistY) {
-          snapY = gridSnapY;
-          snapDistY = gridDistY;
+        function considerX(selfFeature, targetX) {
+          let selfX;
+          if (selfFeature === 'left') selfX = obj.left - objHalfW;
+          else if (selfFeature === 'right') selfX = obj.left + objHalfW;
+          else selfX = obj.left; // center
+          const dx = Math.abs(selfX - targetX);
+          if (dx < bestDx) {
+            if (selfFeature === 'left') bestLeft = targetX + objHalfW;
+            else if (selfFeature === 'right') bestLeft = targetX - objHalfW;
+            else bestLeft = targetX; // center
+            bestDx = dx;
+          }
         }
 
-        // Snap to other objects
+        function considerY(selfFeature, targetY) {
+          let selfY;
+          if (selfFeature === 'top') selfY = obj.top - objHalfH;
+          else if (selfFeature === 'bottom') selfY = obj.top + objHalfH;
+          else selfY = obj.top; // center
+          const dy = Math.abs(selfY - targetY);
+          if (dy < bestDy) {
+            if (selfFeature === 'top') bestTop = targetY + objHalfH;
+            else if (selfFeature === 'bottom') bestTop = targetY - objHalfH;
+            else bestTop = targetY; // center
+            bestDy = dy;
+          }
+        }
+
         canvas.forEachObject(function (otherObj) {
           if (otherObj === obj || otherObj.selectable === false) return;
 
+          const otherHalfW = (otherObj.getScaledWidth && otherObj.getScaledWidth() / 2) || 0;
+          const otherHalfH = (otherObj.getScaledHeight && otherObj.getScaledHeight() / 2) || 0;
           const otherBounds = {
-            left: otherObj.left - otherObj.getScaledWidth() / 2,
-            right: otherObj.left + otherObj.getScaledWidth() / 2,
-            top: otherObj.top - otherObj.getScaledHeight() / 2,
-            bottom: otherObj.top + otherObj.getScaledHeight() / 2,
+            left: otherObj.left - otherHalfW,
+            right: otherObj.left + otherHalfW,
+            top: otherObj.top - otherHalfH,
+            bottom: otherObj.top + otherHalfH,
             centerX: otherObj.left,
             centerY: otherObj.top
           };
 
-          // Snap to left/right edges
-          const snapPoints = [
-            { pos: otherBounds.left, objEdge: 'left', type: 'edge' },
-            { pos: otherBounds.right, objEdge: 'right', type: 'edge' },
-            { pos: otherBounds.centerX, objEdge: 'centerX', type: 'center' }
-          ];
+          // X axis: self {left,right,center} ↔ other {left,right,center}
+          considerX('left', otherBounds.left);
+          considerX('left', otherBounds.right);
+          considerX('left', otherBounds.centerX);
+          considerX('right', otherBounds.left);
+          considerX('right', otherBounds.right);
+          considerX('right', otherBounds.centerX);
+          considerX('center', otherBounds.left);
+          considerX('center', otherBounds.right);
+          considerX('center', otherBounds.centerX);
 
-          snapPoints.forEach(point => {
-            const dist = Math.abs(obj.left - point.pos);
-            if (dist < snapDistX) {
-              snapX = point.pos;
-              snapDistX = dist;
-            }
-          });
-
-          // Snap to top/bottom edges
-          const ySnapPoints = [
-            { pos: otherBounds.top, objEdge: 'top', type: 'edge' },
-            { pos: otherBounds.bottom, objEdge: 'bottom', type: 'edge' },
-            { pos: otherBounds.centerY, objEdge: 'centerY', type: 'center' }
-          ];
-
-          ySnapPoints.forEach(point => {
-            const dist = Math.abs(obj.top - point.pos);
-            if (dist < snapDistY) {
-              snapY = point.pos;
-              snapDistY = dist;
-            }
-          });
+          // Y axis: self {top,bottom,center} ↔ other {top,bottom,center}
+          considerY('top', otherBounds.top);
+          considerY('top', otherBounds.bottom);
+          considerY('top', otherBounds.centerY);
+          considerY('bottom', otherBounds.top);
+          considerY('bottom', otherBounds.bottom);
+          considerY('bottom', otherBounds.centerY);
+          considerY('center', otherBounds.top);
+          considerY('center', otherBounds.bottom);
+          considerY('center', otherBounds.centerY);
         });
 
-        obj.left = snapX;
-        obj.top = snapY;
+        obj.left = bestLeft;
+        obj.top = bestTop;
       }
 
       function resizeCanvas() {
