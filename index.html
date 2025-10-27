@@ -36,6 +36,8 @@
       --bg-toolbar-border: rgba(148, 163, 184, 0.35);
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
+      /* 用于与第一行工具按钮区分的激活态颜色 */
+      --accent: #10b981; /* emerald-500 */
       --text: #0f172a;
       --text-muted: #475569;
       --surface: rgba(255, 255, 255, 0.9);
@@ -265,11 +267,24 @@
       box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
     }
 
+    /* 行为类按钮激活态，与工具按钮样式一致但颜色不同 */
+    .action-button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: transparent;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25);
+    }
+
     .tool-button:not(.active):hover,
-    .action-button:not(:disabled):hover {
+    .action-button:not(.active):hover {
       background: rgba(241, 245, 249, 0.9);
       transform: translateY(-1px);
     }
+
+    .action-button:disabled:hover {
+      transform: translateY(0px);
+    }
+
 
     .control {
       display: inline-flex;
