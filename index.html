@@ -40,6 +40,7 @@
       --text-muted: #475569;
       --surface: rgba(255, 255, 255, 0.9);
       --board-stage-height: 65vh;
+      --ruler-size: 16px;
       font-family: "Inter", "HarmonyOS Sans", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg-base);
     }
@@ -536,6 +537,8 @@
       padding: 16px;
     }
 
+    .board-stage.with-rulers { padding: var(--ruler-size) 16px 16px var(--ruler-size); }
+
     .board-stage-inner {
       position: relative;
     }
@@ -544,7 +547,7 @@
       display: block;
       background: transparent;
       box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.2);
-      border-radius: 16px;
+      border-radius: 6px;
       flex-shrink: 0;
     }
 
@@ -818,6 +821,17 @@
 
     /* 视口驱动：不需要原生或自定义滚动条 */
 
+    /* Rulers */
+    .ruler-x, .ruler-y, .ruler-corner {
+      position: absolute;
+      inset: auto;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .ruler-x { top: 0; left: 0; }
+    .ruler-y { top: 0; left: 0; }
+    .ruler-corner { top: 0; left: 0; width: var(--ruler-size); height: var(--ruler-size); background: #f1f5f9; border-right: 1px solid rgba(15,23,42,0.12); border-bottom: 1px solid rgba(15,23,42,0.12); }
+
   </style>
 </head>
 <body>
@@ -904,6 +918,7 @@
             </label>
             <button class="action-button" type="button" data-action="duplicate">复制图层</button>
             <button class="action-button" type="button" data-action="toggle-snap" aria-label="启用/禁用吸附对齐" title="启用吸附功能后，移动对象时会自动对齐到网格或其他对象">吸附</button>
+            <button class="action-button" type="button" data-action="toggle-rulers" aria-label="显示/隐藏标尺" title="显示或隐藏顶部/左侧标尺">标尺</button>
             <div class="arrange-control">
               <input type="number" min="0" max="100" value="0" id="gapX" aria-label="排列X间距" placeholder="X" title="图片水平间距" />
               <input type="number" min="0" max="100" value="0" id="gapY" aria-label="排列Y间距" placeholder="Y" title="图片垂直间距" />
@@ -973,6 +988,9 @@
           </div>
         </div>
         <div class="board-stage" id="boardStage">
+          <canvas class="ruler-x" id="rulerX" aria-hidden="true"></canvas>
+          <canvas class="ruler-y" id="rulerY" aria-hidden="true"></canvas>
+          <div class="ruler-corner" id="rulerCorner" aria-hidden="true"></div>
           <div class="board-stage-inner">
             <canvas id="board" role="img" aria-label="绘图画布"></canvas>
             <div class="drop-hint" id="dropHint">拖拽图片到这里，自动导入并排版</div>
@@ -1046,6 +1064,13 @@
       const heroFocusBtn = document.querySelector('[data-action="focus-board"]');
       const heroFullscreenBtn = document.querySelector('[data-action="enter-fullscreen"]');
       const mobileMenu = document.getElementById('mobileMenu');
+      // Rulers/HUD elements declared early to avoid TDZ
+      const rulerX = document.getElementById('rulerX');
+      const rulerY = document.getElementById('rulerY');
+      const rulerCorner = document.getElementById('rulerCorner');
+      let rulersEnabled = false;
+
+      let rulerRAF = null;
       
       // Mobile controls
       const colorPickerMobile = document.getElementById('colorPickerMobile');
@@ -1167,12 +1192,20 @@
 
       function resizeCanvas() {
         const rect = boardStage.getBoundingClientRect();
-        const width = Math.max(rect.width - 32, 240);
-        const height = Math.max(rect.height - 32, 240);
+        const cs = getComputedStyle(boardStage);
+        const padL = parseFloat(cs.paddingLeft) || 0;
+        const padR = parseFloat(cs.paddingRight) || 0;
+        const padT = parseFloat(cs.paddingTop) || 0;
+        const padB = parseFloat(cs.paddingBottom) || 0;
+        const width = Math.max(rect.width - (padL + padR), 240);
+        const height = Math.max(rect.height - (padT + padB), 240);
         canvas.setWidth(width);
         canvas.setHeight(height);
         canvas.calcOffset();
         canvas.renderAll();
+        if (typeof resizeOverlays === 'function') {
+          resizeOverlays();
+        }
       }
 
       function updateBoardStageHeight() {
@@ -1226,6 +1259,147 @@
       
       updateBoardStageHeight();
       resizeCanvas();
+
+      // Rulers and origin HUD
+
+      function sizeCanvasForDPR(el, cssW, cssH) {
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        el.width = Math.max(1, Math.round(cssW * dpr));
+        el.height = Math.max(1, Math.round(cssH * dpr));
+        el.style.width = cssW + 'px';
+        el.style.height = cssH + 'px';
+        const ctx = el.getContext('2d');
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return ctx;
+      }
+
+      function resizeOverlays() {
+        if (!boardStage) return;
+        if (!rulerX || !rulerY) return;
+        const cs = getComputedStyle(boardStage);
+        const padL = parseFloat(cs.paddingLeft) || 0;
+        const padT = parseFloat(cs.paddingTop) || 0;
+        const cw = canvas.getWidth();
+        const ch = canvas.getHeight();
+        if (rulerX) {
+          rulerX.style.left = padL + 'px';
+          rulerX.style.top = '0px';
+          sizeCanvasForDPR(rulerX, Math.max(1, cw), Math.max(1, padT));
+        }
+        if (rulerY) {
+          rulerY.style.left = '0px';
+          rulerY.style.top = padT + 'px';
+          sizeCanvasForDPR(rulerY, Math.max(1, padL), Math.max(1, ch));
+        }
+        if (rulerCorner) {
+          rulerCorner.style.width = padL + 'px';
+          rulerCorner.style.height = padT + 'px';
+          rulerCorner.style.display = rulersEnabled ? 'block' : 'none';
+        }
+        drawRulers();
+      }
+
+      function niceStep(raw) {
+        const p10 = Math.pow(10, Math.floor(Math.log10(raw)));
+        const n = raw / p10;
+        let s = 1;
+        if (n <= 1) s = 1; else if (n <= 2) s = 2; else if (n <= 5) s = 5; else s = 10;
+        return s * p10;
+      }
+
+      function drawRulerHorizontal(ctx) {
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const w = ctx.canvas.width / dpr;
+        const h = ctx.canvas.height / dpr;
+        ctx.clearRect(0, 0, w, h);
+        if (!rulersEnabled) return;
+        const vpt = canvas.viewportTransform || [1,0,0,1,0,0];
+        const a = vpt[0], e = vpt[4];
+        const zoom = a || 1;
+        const desiredPx = 64;
+        const stepWorld = Math.max(1, niceStep(desiredPx / zoom));
+        const startWorld = Math.floor(((0 - e) / zoom) / stepWorld) * stepWorld;
+        ctx.fillStyle = '#f1f5f9';
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(15,23,42,0.25)';
+        ctx.beginPath();
+        ctx.moveTo(0, h - 0.5); ctx.lineTo(w, h - 0.5); ctx.stroke();
+        ctx.strokeStyle = 'rgba(15,23,42,0.35)';
+        ctx.fillStyle = 'rgba(15,23,42,0.7)';
+        ctx.textBaseline = 'top';
+        ctx.font = '9px Inter, system-ui, -apple-system, sans-serif';
+        const endWorld = ((w - e) / zoom) + stepWorld * 2;
+        for (let x = startWorld; x <= endWorld; x += stepWorld) {
+          const sx = x * zoom + e;
+          if (sx < 0 || sx > w) continue;
+          const isMajor = (Math.round(x / stepWorld) % 5) === 0;
+          const tickTop = isMajor ? 0 : h * 0.4;
+          ctx.beginPath();
+          ctx.moveTo(Math.round(sx) + 0.5, h);
+          ctx.lineTo(Math.round(sx) + 0.5, tickTop);
+          ctx.stroke();
+          if (isMajor && h >= 12) {
+            ctx.fillText(String(Math.round(x)), sx + 2, 2);
+          }
+        }
+      }
+
+      function drawRulerVertical(ctx) {
+        const dpr = Math.max(1, window.devicePixelRatio || 1);
+        const w = ctx.canvas.width / dpr;
+        const h = ctx.canvas.height / dpr;
+        ctx.clearRect(0, 0, w, h);
+        if (!rulersEnabled) return;
+        const vpt = canvas.viewportTransform || [1,0,0,1,0,0];
+        const d = vpt[3], f = vpt[5];
+        const zoom = d || 1;
+        const desiredPx = 64;
+        const stepWorld = Math.max(1, niceStep(desiredPx / zoom));
+        const startWorld = Math.floor(((0 - f) / zoom) / stepWorld) * stepWorld;
+        ctx.fillStyle = '#f1f5f9';
+        ctx.fillRect(0, 0, w, h);
+        ctx.strokeStyle = 'rgba(15,23,42,0.25)';
+        ctx.beginPath();
+        ctx.moveTo(w - 0.5, 0); ctx.lineTo(w - 0.5, h); ctx.stroke();
+        ctx.strokeStyle = 'rgba(15,23,42,0.35)';
+        ctx.fillStyle = 'rgba(15,23,42,0.7)';
+        ctx.textAlign = 'right';
+        ctx.font = '9px Inter, system-ui, -apple-system, sans-serif';
+        const endWorld = ((h - f) / zoom) + stepWorld * 2;
+        for (let y = startWorld; y <= endWorld; y += stepWorld) {
+          const sy = y * zoom + f;
+          if (sy < 0 || sy > h) continue;
+          const isMajor = (Math.round(y / stepWorld) % 5) === 0;
+          const tickLeft = isMajor ? 0 : w * 0.6;
+          ctx.beginPath();
+          ctx.moveTo(w, Math.round(sy) + 0.5);
+          ctx.lineTo(tickLeft, Math.round(sy) + 0.5);
+          ctx.stroke();
+          if (isMajor && w >= 12) {
+            ctx.save();
+            ctx.translate(w - 2, sy + 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(String(Math.round(y)), 0, 0);
+            ctx.restore();
+          }
+        }
+      }
+
+      function drawRulers() {
+        if (rulerRAF) return;
+        rulerRAF = requestAnimationFrame(() => {
+          rulerRAF = null;
+          if (rulerX) {
+            const ctxX = rulerX.getContext('2d');
+            if (ctxX) drawRulerHorizontal(ctxX);
+          }
+          if (rulerY) {
+            const ctxY = rulerY.getContext('2d');
+            if (ctxY) drawRulerVertical(ctxY);
+          }
+        });
+      }
+
 
       function clampZoom(z) {
         return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, z));
@@ -1892,6 +2066,18 @@
         showToast(snapEnabled ? '吸附已启用' : '吸附已禁用');
       });
 
+      document.querySelector('[data-action="toggle-rulers"]').addEventListener('click', (e) => {
+        rulersEnabled = !rulersEnabled;
+        e.target.classList.toggle('active', rulersEnabled);
+        boardStage.classList.toggle('with-rulers', rulersEnabled);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          resizeCanvas();
+          drawRulers();
+        }));
+      });
+
+      // removed origin toggle
+
       document.querySelectorAll('[data-action="undo"]').forEach(btn => btn.addEventListener('click', () => undo()));
       document.querySelectorAll('[data-action="redo"]').forEach(btn => btn.addEventListener('click', () => redo()));
       document.querySelector('[data-action="arrange"]').addEventListener('click', () => autoArrangeImages());
@@ -2397,6 +2583,9 @@
         }
       });
 
+      // Rulers/HUD updates
+      canvas.on('after:render', () => { drawRulers(); });
+
       document.addEventListener('fullscreenchange', () => {
         const fullscreenButton = document.querySelector('[data-action="fullscreen"]');
         const isFull = Boolean(document.fullscreenElement);
@@ -2406,6 +2595,9 @@
         }
         requestAnimationFrame(updateBoardStageHeight);
       });
+
+      // Initial overlay sizing
+      if (typeof resizeOverlays === 'function') resizeOverlays();
 
       setTool('pointer');
       saveHistory();
