@@ -717,6 +717,9 @@
       padding: 16px;
       z-index: 10;
       box-shadow: 0 8px 24px rgba(15, 23, 42, 0.15);
+      max-height: 70vh;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .mobile-dropdown-menu.show {
@@ -745,6 +748,20 @@
       flex-wrap: wrap;
       gap: 8px;
     }
+
+    /* 子工具下拉（绝对定位，不影响原布局） */
+    .subtool-dropdown {
+      position: absolute;
+      display: none;
+      gap: 8px;
+      padding: 8px;
+      background: var(--bg-toolbar);
+      border: 1px solid var(--bg-toolbar-border);
+      border-radius: 10px;
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.15);
+      z-index: 25;
+    }
+    .subtool-dropdown.show { display: inline-flex; }
 
     @media (max-width: 1280px) {
       .hero {
@@ -888,9 +905,12 @@
           <div class="toolbar-row tools">
             <button class="tool-button active" type="button" data-tool="pointer" title="选择 (V)"><span class="btn-icon" style="padding-bottom: 4px;">⌖</span><span class="btn-text">选择</span></button>
             <button class="tool-button" type="button" data-tool="pan" title="拖动 (Space / H)"><span class="btn-icon">✋</span><span class="btn-text">拖动</span></button>
-            <button class="tool-button" type="button" data-tool="brush" title="画笔 (B)"><span class="btn-icon">✏️</span><span class="btn-text">画笔</span></button>
-            <button class="tool-button" type="button" data-tool="rect" title="矩形"><span class="btn-icon">▭</span><span class="btn-text">矩形</span></button>
-            <button class="tool-button" type="button" data-tool="ellipse" title="圆/椭圆"><span class="btn-icon">◯</span><span class="btn-text">圆形</span></button>
+            <button class="tool-button" type="button" data-tool="brush" title="画笔 (B)" id="brushToolBtn"><span class="btn-icon">✏️</span><span class="btn-text">画笔</span></button>
+            <div class="subtool-dropdown" id="brushDropdown" aria-label="画笔子工具" hidden>
+              <button class="action-button subtool" type="button" data-subtool="line" title="线条 (L)">线条</button>
+              <button class="action-button subtool" type="button" data-subtool="rect" title="矩形 (R)">矩形</button>
+              <button class="action-button subtool" type="button" data-subtool="ellipse" title="圆形 (O)">圆形</button>
+            </div>
             <button class="tool-button" type="button" data-action="text" title="文字 (T)"><span class="btn-icon">T</span><span class="btn-text">文字</span></button>
             <button class="tool-button" type="button" data-tool="eraser" title="橡皮擦 (E)"><span class="btn-icon">◻️</span><span class="btn-text">橡皮擦</span></button>
             <button class="action-button" type="button" data-action="fullscreen" title="全屏专注 (F)"><span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span></button>
@@ -968,6 +988,14 @@
                   <input type="range" min="1" max="60" value="8" id="brushSizeMobile" aria-label="画笔粗细" />
                   <input type="number" min="1" max="60" value="8" id="brushSizeNumberMobile" aria-label="画笔粗细数值" />
                 </div>
+              </div>
+              <div class="control" title="形状填充（移动端）" style="margin-bottom: 12px;">
+                <label style="display:inline-flex;align-items:center;gap:6px;">
+                  <input type="checkbox" id="fillEnabledMobile" aria-label="启用填充（移动端）" checked /> 填充
+                </label>
+                <input type="color" value="#fbbf24" id="fillColorMobile" aria-label="填充颜色（移动端）" />
+                <span class="btn-text">虚线</span>
+                <input type="text" id="dashPatternMobile" placeholder="4,2" aria-label="虚线样式（移动端，逗号分隔）" style="width:96px;padding:4px 6px;border:none;background:rgba(148,163,184,0.1);border-radius:6px;" />
               </div>
               <div class="control" title="背景" style="margin-bottom: 12px;">
                 <span class="btn-text">背景</span>
@@ -1090,6 +1118,8 @@
       const heroFocusBtn = document.querySelector('[data-action="focus-board"]');
       const heroFullscreenBtn = document.querySelector('[data-action="enter-fullscreen"]');
       const mobileMenu = document.getElementById('mobileMenu');
+      const brushToolBtn = document.getElementById('brushToolBtn');
+      const brushDropdown = document.getElementById('brushDropdown');
       // Rulers/HUD elements declared early to avoid TDZ
       const rulerX = document.getElementById('rulerX');
       const rulerY = document.getElementById('rulerY');
@@ -1300,6 +1330,15 @@
       
       updateBoardStageHeight();
       resizeCanvas();
+
+      function positionBrushDropdown() {
+        if (!brushToolBtn || !brushDropdown) return;
+        const toolbar = document.querySelector('.board-toolbar');
+        const btnRect = brushToolBtn.getBoundingClientRect();
+        const barRect = toolbar.getBoundingClientRect();
+        brushDropdown.style.left = Math.round(btnRect.left - barRect.left) + 'px';
+        brushDropdown.style.top = Math.round(btnRect.bottom - barRect.top + 6) + 'px';
+      }
 
       // Rulers and origin HUD
 
@@ -1565,7 +1604,7 @@
           canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
           canvas.defaultCursor = 'default';
           canvas.skipTargetFind = false;
-        } else if (tool === 'rect' || tool === 'ellipse') {
+        } else if (tool === 'rect' || tool === 'ellipse' || tool === 'line') {
           canvas.isDrawingMode = false;
           panMode = false;
           canvas.selection = false;
@@ -1647,7 +1686,7 @@
         if (!activeObject) return;
         if (activeObject.type === 'textbox') {
           colorPicker.value = hexFromColor(activeObject.fill || '#ef4444');
-        } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse') {
+        } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse' || activeObject.type === 'line') {
           colorPicker.value = hexFromColor(activeObject.stroke || '#ef4444');
         }
       }
@@ -2071,6 +2110,13 @@
         if (brushSizeNumberMobile) brushSizeNumberMobile.value = brushSizeNumber.value;
         if (bgModeMobile && bgMode) bgModeMobile.value = bgMode.value;
         if (bgColorMobile && bgColor) bgColorMobile.value = bgColor.value;
+        const fem = document.getElementById('fillEnabledMobile');
+        const fcm = document.getElementById('fillColorMobile');
+        if (fem) fem.checked = !!shapeOptions.fillEnabled;
+        if (fcm) fcm.value = shapeOptions.fill || (document.getElementById('fillColor')?.value || '#fbbf24');
+        const dpm = document.getElementById('dashPatternMobile');
+        const dp = document.getElementById('dashPattern');
+        if (dpm) dpm.value = dp?.value || (shapeOptions.strokeDashArray ? shapeOptions.strokeDashArray.join(',') : '');
         document.getElementById('gapXMobile').value = document.getElementById('gapX').value;
         document.getElementById('gapYMobile').value = document.getElementById('gapY').value;
         const rowsEl = document.getElementById('rows');
@@ -2109,6 +2155,30 @@
           setTool(button.dataset.tool);
         });
       });
+
+      // Brush dropdown: open under brush button; subtools select drawing mode
+      if (brushToolBtn && brushDropdown) {
+        brushToolBtn.addEventListener('click', (e) => {
+          setTool('brush');
+          e.stopPropagation();
+          positionBrushDropdown();
+          brushDropdown.hidden = false;
+          brushDropdown.classList.add('show');
+        });
+        document.querySelectorAll('#brushDropdown .subtool').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const t = btn.getAttribute('data-subtool');
+            if (t === 'line' || t === 'rect' || t === 'ellipse') {
+              setTool(t);
+            }
+            brushDropdown.classList.remove('show');
+            brushDropdown.hidden = true;
+          });
+        });
+        window.addEventListener('resize', () => {
+          if (!brushDropdown.hidden) positionBrushDropdown();
+        });
+      }
 
       document.querySelector('[data-action="text"]').addEventListener('click', () => {
         openTextDialog();
@@ -2192,7 +2262,7 @@
             activeObject.set('fill', colorPicker.value);
             canvas.renderAll();
             saveHistory();
-          } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse') {
+        } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse' || activeObject.type === 'line') {
             activeObject.set('stroke', colorPicker.value);
             canvas.renderAll();
             saveHistory();
@@ -2311,7 +2381,7 @@
             activeObject.set('fill', colorPicker.value);
             canvas.renderAll();
             saveHistory();
-          } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse') {
+        } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse' || activeObject.type === 'line') {
             activeObject.set('stroke', colorPicker.value);
             canvas.renderAll();
             saveHistory();
@@ -2324,7 +2394,7 @@
         brushSizeNumber.value = brushSizeInput.value;
         ensureBrushSettings();
         const activeObject = canvas.getActiveObject();
-        if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'ellipse')) {
+        if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'ellipse' || activeObject.type === 'line')) {
           activeObject.set('strokeWidth', parseInt(brushSizeInput.value, 10) || 1);
           canvas.renderAll();
           saveHistory();
@@ -2338,7 +2408,7 @@
         brushSizeInput.value = value;
         ensureBrushSettings();
         const activeObject = canvas.getActiveObject();
-        if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'ellipse')) {
+        if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'ellipse' || activeObject.type === 'line')) {
           activeObject.set('strokeWidth', value);
           canvas.renderAll();
           saveHistory();
@@ -2412,6 +2482,10 @@
         if (event.key === 'Escape' && mobileMenu?.classList.contains('show')) {
           mobileMenu.classList.remove('show');
         }
+        if (event.key === 'Escape' && brushDropdown && !brushDropdown.hidden) {
+          brushDropdown.classList.remove('show');
+          brushDropdown.hidden = true;
+        }
         if (event.key === 'Escape' && shapeState.active) {
           if (shapeState.preview) {
             canvas.remove(shapeState.preview);
@@ -2432,6 +2506,7 @@
           else if (lower === 'b') { setTool('brush'); }
           else if (lower === 'e') { setTool('eraser'); }
           else if (lower === 'h') { setTool('pan'); }
+          else if (lower === 'l') { setTool('line'); }
           else if (lower === 'r') { setTool('rect'); }
           else if (lower === 'o') { setTool('ellipse'); }
           else if (lower === 't') { openTextDialog(); }
@@ -2580,7 +2655,7 @@
           return;
         }
         // Shape drawing start
-        if (currentTool === 'rect' || currentTool === 'ellipse') {
+        if (currentTool === 'rect' || currentTool === 'ellipse' || currentTool === 'line') {
           const p0 = canvas.getPointer(e);
           shapeState.active = true;
           shapeState.kind = currentTool;
@@ -2606,7 +2681,7 @@
               excludeFromExport: true,
               opacity: 0.85
             });
-          } else {
+          } else if (currentTool === 'ellipse') {
             shapeState.preview = new fabric.Ellipse({
               left: p0.x,
               top: p0.y,
@@ -2622,6 +2697,18 @@
               evented: false,
               excludeFromExport: true,
               opacity: 0.85
+            });
+          } else if (currentTool === 'line') {
+            shapeState.preview = new fabric.Line([p0.x, p0.y, p0.x, p0.y], {
+              stroke: shapeOptions.stroke,
+              strokeWidth: shapeOptions.strokeWidth,
+              strokeDashArray: shapeOptions.strokeDashArray || null,
+              selectable: false,
+              evented: false,
+              excludeFromExport: true,
+              opacity: 0.85,
+              originX: 'center',
+              originY: 'center'
             });
           }
           canvas.add(shapeState.preview);
@@ -2663,7 +2750,7 @@
           const x0 = shapeState.start.x, y0 = shapeState.start.y;
           let w = Math.abs(p1.x - x0);
           let h = Math.abs(p1.y - y0);
-          if (e && e.shiftKey) {
+          if (shapeState.kind !== 'line' && e && e.shiftKey) {
             const s = Math.min(w, h);
             w = s; h = s;
           }
@@ -2673,8 +2760,21 @@
             shapeState.preview.set({ left: cx, top: cy, width: Math.max(0.5, w), height: Math.max(0.5, h) });
           } else if (shapeState.kind === 'ellipse') {
             shapeState.preview.set({ left: cx, top: cy, rx: Math.max(0.25, w / 2), ry: Math.max(0.25, h / 2) });
+          } else if (shapeState.kind === 'line') {
+            let x2 = p1.x, y2 = p1.y;
+            if (e && e.shiftKey) {
+              const dx = p1.x - x0;
+              const dy = p1.y - y0;
+              const len = Math.hypot(dx, dy) || 0;
+              const ang = Math.atan2(dy, dx);
+              const step = Math.PI / 4; // 45°
+              const snapped = Math.round(ang / step) * step;
+              x2 = x0 + Math.cos(snapped) * len;
+              y2 = y0 + Math.sin(snapped) * len;
+            }
+            shapeState.preview.set({ x1: x0, y1: y0, x2, y2 });
           }
-          if (snapEnabled) {
+          if (snapEnabled && shapeState.kind !== 'line') {
             calculateSnap(shapeState.preview);
           }
           canvas.requestRenderAll();
@@ -2704,9 +2804,18 @@
           if (obj) {
             const zoom = canvas.getZoom() || 1;
             const minDim = 3 / zoom;
-            const w = obj.getScaledWidth?.() || obj.width || 0;
-            const h = obj.getScaledHeight?.() || obj.height || 0;
-            if (Math.max(w, h) < minDim) {
+            let tooSmall = false;
+            if (obj.type === 'line') {
+              const lx = (obj.x2 || 0) - (obj.x1 || 0);
+              const ly = (obj.y2 || 0) - (obj.y1 || 0);
+              const L = Math.hypot(lx, ly) || 0;
+              tooSmall = L < minDim;
+            } else {
+              const w = obj.getScaledWidth?.() || obj.width || 0;
+              const h = obj.getScaledHeight?.() || obj.height || 0;
+              tooSmall = Math.max(w, h) < minDim;
+            }
+            if (tooSmall) {
               canvas.remove(obj);
               shapeState.preview = null;
               canvas.requestRenderAll();
@@ -2732,11 +2841,20 @@
       
       // Close mobile menu when clicking/tapping outside, including canvas area
       function closeMenuIfOutside(target) {
-        if (!mobileMenu?.classList.contains('show')) return;
-        const isMenuClick = mobileMenu.contains(target);
-        const isToggleClick = target.closest && target.closest('[data-action="toggle-menu"]');
-        if (!isMenuClick && !isToggleClick) {
-          mobileMenu.classList.remove('show');
+        if (mobileMenu?.classList.contains('show')) {
+          const isMenuClick = mobileMenu.contains(target);
+          const isToggleClick = target.closest && target.closest('[data-action="toggle-menu"]');
+          if (!isMenuClick && !isToggleClick) {
+            mobileMenu.classList.remove('show');
+          }
+        }
+        if (brushDropdown && !brushDropdown.hidden) {
+          const isBrushToggle = target.closest && target.closest('#brushToolBtn');
+          const isBrushDrop = brushDropdown.contains(target);
+          if (!isBrushToggle && !isBrushDrop) {
+            brushDropdown.classList.remove('show');
+            brushDropdown.hidden = true;
+          }
         }
       }
       // Fallback for mouse click
@@ -2796,9 +2914,13 @@
       const fillEnabledEl = document.getElementById('fillEnabled');
       const fillColorEl = document.getElementById('fillColor');
       const dashPatternEl = document.getElementById('dashPattern');
+      const fillEnabledMobileEl = document.getElementById('fillEnabledMobile');
+      const fillColorMobileEl = document.getElementById('fillColorMobile');
+      const dashPatternMobileEl = document.getElementById('dashPatternMobile');
       if (fillEnabledEl && fillColorEl && dashPatternEl) {
         fillEnabledEl.addEventListener('change', () => {
           shapeOptions.fillEnabled = !!fillEnabledEl.checked;
+          if (fillEnabledMobileEl) fillEnabledMobileEl.checked = fillEnabledEl.checked;
           const active = canvas.getActiveObject();
           if (active && (active.type === 'rect' || active.type === 'ellipse')) {
             active.set('fill', shapeOptions.fillEnabled ? (shapeOptions.fill || fillColorEl.value) : null);
@@ -2808,6 +2930,7 @@
         });
         fillColorEl.addEventListener('input', () => {
           shapeOptions.fill = fillColorEl.value;
+          if (fillColorMobileEl) fillColorMobileEl.value = fillColorEl.value;
           const active = canvas.getActiveObject();
           if (active && (active.type === 'rect' || active.type === 'ellipse')) {
             if (shapeOptions.fillEnabled) {
@@ -2824,8 +2947,55 @@
         }
         dashPatternEl.addEventListener('input', () => {
           shapeOptions.strokeDashArray = parseDash(dashPatternEl.value);
+          if (dashPatternMobileEl) dashPatternMobileEl.value = dashPatternEl.value;
+          const active = canvas.getActiveObject();
+          if (active && (active.type === 'rect' || active.type === 'ellipse' || active.type === 'line')) {
+            active.set('strokeDashArray', shapeOptions.strokeDashArray || null);
+            canvas.requestRenderAll();
+            saveHistory();
+          }
+        });
+      }
+
+      // Mobile fill controls wiring
+      if (fillEnabledMobileEl) {
+        fillEnabledMobileEl.addEventListener('change', () => {
+          shapeOptions.fillEnabled = !!fillEnabledMobileEl.checked;
+          if (fillEnabledEl) fillEnabledEl.checked = fillEnabledMobileEl.checked;
           const active = canvas.getActiveObject();
           if (active && (active.type === 'rect' || active.type === 'ellipse')) {
+            active.set('fill', shapeOptions.fillEnabled ? (shapeOptions.fill || (fillColorEl?.value || fillColorMobileEl?.value)) : null);
+            canvas.requestRenderAll();
+            saveHistory();
+          }
+        });
+      }
+      if (fillColorMobileEl) {
+        fillColorMobileEl.addEventListener('input', () => {
+          shapeOptions.fill = fillColorMobileEl.value;
+          if (fillColorEl) fillColorEl.value = fillColorMobileEl.value;
+          const active = canvas.getActiveObject();
+          if (active && (active.type === 'rect' || active.type === 'ellipse')) {
+            if (shapeOptions.fillEnabled) {
+              active.set('fill', fillColorMobileEl.value);
+              canvas.requestRenderAll();
+              saveHistory();
+            }
+          }
+        });
+      }
+
+      if (dashPatternMobileEl) {
+        function parseDashMobile(v) {
+          if (!v) return null;
+          const arr = String(v).split(',').map(s => Math.max(0, parseFloat(s.trim()))).filter(n => isFinite(n) && n > 0);
+          return arr.length ? arr : null;
+        }
+        dashPatternMobileEl.addEventListener('input', () => {
+          shapeOptions.strokeDashArray = parseDashMobile(dashPatternMobileEl.value);
+          if (dashPatternEl) dashPatternEl.value = dashPatternMobileEl.value;
+          const active = canvas.getActiveObject();
+          if (active && (active.type === 'rect' || active.type === 'ellipse' || active.type === 'line')) {
             active.set('strokeDashArray', shapeOptions.strokeDashArray || null);
             canvas.requestRenderAll();
             saveHistory();
