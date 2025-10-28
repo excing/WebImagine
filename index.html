@@ -889,6 +889,8 @@
             <button class="tool-button active" type="button" data-tool="pointer" title="选择 (V)"><span class="btn-icon" style="padding-bottom: 4px;">⌖</span><span class="btn-text">选择</span></button>
             <button class="tool-button" type="button" data-tool="pan" title="拖动 (Space / H)"><span class="btn-icon">✋</span><span class="btn-text">拖动</span></button>
             <button class="tool-button" type="button" data-tool="brush" title="画笔 (B)"><span class="btn-icon">✏️</span><span class="btn-text">画笔</span></button>
+            <button class="tool-button" type="button" data-tool="rect" title="矩形"><span class="btn-icon">▭</span><span class="btn-text">矩形</span></button>
+            <button class="tool-button" type="button" data-tool="ellipse" title="圆/椭圆"><span class="btn-icon">◯</span><span class="btn-text">圆形</span></button>
             <button class="tool-button" type="button" data-action="text" title="文字 (T)"><span class="btn-icon">T</span><span class="btn-text">文字</span></button>
             <button class="tool-button" type="button" data-tool="eraser" title="橡皮擦 (E)"><span class="btn-icon">◻️</span><span class="btn-text">橡皮擦</span></button>
             <button class="action-button" type="button" data-action="fullscreen" title="全屏专注 (F)"><span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span></button>
@@ -909,6 +911,14 @@
                 <input type="range" min="1" max="60" value="4" id="brushSize" aria-label="画笔粗细" />
                 <input type="number" min="1" max="60" value="4" id="brushSizeNumber" aria-label="画笔粗细数值" />
               </div>
+            </div>
+            <div class="control" title="形状样式" id="shapeControls">
+              <label style="display:inline-flex;align-items:center;gap:6px;">
+                <input type="checkbox" id="fillEnabled" aria-label="启用填充" checked /> 填充
+              </label>
+              <input type="color" value="#fbbf24" id="fillColor" aria-label="填充颜色" />
+              <span class="btn-text">虚线</span>
+              <input type="text" id="dashPattern" placeholder="4,2" aria-label="虚线样式(逗号分隔)" style="width:72px;padding:4px 6px;border:none;background:rgba(148,163,184,0.1);border-radius:6px;" />
             </div>
             <div class="control" title="背景">
               <span class="btn-text">背景</span>
@@ -986,6 +996,7 @@
                 <button class="action-button" type="button" data-action="duplicate-mobile">复制图层</button>
                 <button class="action-button" type="button" data-action="delete-mobile">删除所选</button>
                 <button class="action-button" type="button" data-action="toggle-snap-mobile">吸附</button>
+                <button class="action-button" type="button" data-action="toggle-rulers-mobile">标尺</button>
                 <div class="arrange-control" style="margin-bottom: 12px;">
                   <input type="number" min="0" max="100" value="0" id="gapXMobile" aria-label="排列X间距" placeholder="X" title="图片水平间距" />
                   <input type="number" min="0" max="100" value="0" id="gapYMobile" aria-label="排列Y间距" placeholder="Y" title="图片垂直间距" />
@@ -1121,6 +1132,20 @@
       };
 
       let currentBrushMode = 'brush';
+      let currentTool = 'pointer';
+      const shapeOptions = {
+        stroke: '#ef4444',
+        strokeWidth: 4,
+        fillEnabled: true,
+        fill: '#fbbf24',
+        strokeDashArray: null
+      };
+      const shapeState = {
+        active: false,
+        kind: null, // 'rect' | 'ellipse'
+        start: { x: 0, y: 0 },
+        preview: null
+      };
       let snapEnabled = false;
       const SNAP_PX = 8; // visual tolerance in screen pixels
 
@@ -1517,6 +1542,7 @@
         buttons.forEach(btn => {
           btn.classList.toggle('active', btn.dataset.tool === tool);
         });
+        currentTool = tool;
         if (tool === 'brush') {
           currentBrushMode = 'brush';
           canvas.isDrawingMode = true;
@@ -1527,6 +1553,7 @@
           canvas.selection = true;
           canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
           canvas.defaultCursor = 'default';
+          canvas.skipTargetFind = false;
         } else if (tool === 'eraser') {
           currentBrushMode = 'erase';
           canvas.isDrawingMode = true;
@@ -1537,6 +1564,15 @@
           canvas.selection = true;
           canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
           canvas.defaultCursor = 'default';
+          canvas.skipTargetFind = false;
+        } else if (tool === 'rect' || tool === 'ellipse') {
+          canvas.isDrawingMode = false;
+          panMode = false;
+          canvas.selection = false;
+          canvas.discardActiveObject();
+          canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
+          canvas.defaultCursor = 'crosshair';
+          canvas.skipTargetFind = true;
         } else if (tool === 'pan') {
           canvas.isDrawingMode = false;
           panMode = true;
@@ -1545,12 +1581,14 @@
           canvas.forEachObject(obj => { obj.selectable = false; obj.evented = false; });
           canvas.defaultCursor = 'grab';
           canvas.renderAll();
+          canvas.skipTargetFind = true;
         } else {
           canvas.isDrawingMode = false;
           panMode = false;
           canvas.selection = true;
           canvas.forEachObject(obj => { obj.selectable = true; obj.evented = true; });
           canvas.defaultCursor = 'default';
+          canvas.skipTargetFind = false;
         }
       }
 
@@ -1609,7 +1647,7 @@
         if (!activeObject) return;
         if (activeObject.type === 'textbox') {
           colorPicker.value = hexFromColor(activeObject.fill || '#ef4444');
-        } else if (activeObject.type === 'path') {
+        } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse') {
           colorPicker.value = hexFromColor(activeObject.stroke || '#ef4444');
         }
       }
@@ -2085,6 +2123,7 @@
       document.querySelector('[data-action="toggle-rulers"]').addEventListener('click', (e) => {
         rulersEnabled = !rulersEnabled;
         e.target.classList.toggle('active', rulersEnabled);
+        document.querySelector('[data-action="toggle-rulers-mobile"]')?.classList.toggle('active', rulersEnabled);
         boardStage.classList.toggle('with-rulers', rulersEnabled);
         requestAnimationFrame(() => requestAnimationFrame(() => {
           resizeCanvas();
@@ -2118,6 +2157,16 @@
         document.querySelector('[data-action="toggle-snap"]')?.classList.toggle('active', snapEnabled);
         showToast(snapEnabled ? '吸附已启用' : '吸附已禁用');
       });
+      document.querySelector('[data-action="toggle-rulers-mobile"]')?.addEventListener('click', (e) => {
+        rulersEnabled = !rulersEnabled;
+        e.target.classList.toggle('active', rulersEnabled);
+        document.querySelector('[data-action="toggle-rulers"]')?.classList.toggle('active', rulersEnabled);
+        boardStage.classList.toggle('with-rulers', rulersEnabled);
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          resizeCanvas();
+          drawRulers();
+        }));
+      });
       
       document.querySelector('[data-action="undo-mobile"]')?.addEventListener('click', () => undo());
       document.querySelector('[data-action="redo-mobile"]')?.addEventListener('click', () => redo());
@@ -2136,13 +2185,14 @@
       colorPickerMobile?.addEventListener('input', () => {
         colorPicker.value = colorPickerMobile.value;
         ensureBrushSettings();
+        shapeOptions.stroke = colorPicker.value;
         const activeObject = canvas.getActiveObject();
         if (activeObject) {
           if (activeObject.type === 'textbox') {
             activeObject.set('fill', colorPicker.value);
             canvas.renderAll();
             saveHistory();
-          } else if (activeObject.type === 'path') {
+          } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse') {
             activeObject.set('stroke', colorPicker.value);
             canvas.renderAll();
             saveHistory();
@@ -2155,6 +2205,7 @@
         brushSizeNumber.value = brushSizeMobile.value;
         brushSizeNumberMobile.value = brushSizeMobile.value;
         ensureBrushSettings();
+        shapeOptions.strokeWidth = parseInt(brushSizeMobile.value, 10) || 1;
       });
 
       zoomRangeMobile?.addEventListener('input', () => {
@@ -2260,17 +2311,25 @@
             activeObject.set('fill', colorPicker.value);
             canvas.renderAll();
             saveHistory();
-          } else if (activeObject.type === 'path') {
+          } else if (activeObject.type === 'path' || activeObject.type === 'rect' || activeObject.type === 'ellipse') {
             activeObject.set('stroke', colorPicker.value);
             canvas.renderAll();
             saveHistory();
           }
         }
+        shapeOptions.stroke = colorPicker.value;
       });
 
       brushSizeInput.addEventListener('input', () => {
         brushSizeNumber.value = brushSizeInput.value;
         ensureBrushSettings();
+        const activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'ellipse')) {
+          activeObject.set('strokeWidth', parseInt(brushSizeInput.value, 10) || 1);
+          canvas.renderAll();
+          saveHistory();
+        }
+        shapeOptions.strokeWidth = parseInt(brushSizeInput.value, 10) || 1;
       });
 
       brushSizeNumber.addEventListener('input', () => {
@@ -2278,6 +2337,13 @@
         brushSizeNumber.value = value;
         brushSizeInput.value = value;
         ensureBrushSettings();
+        const activeObject = canvas.getActiveObject();
+        if (activeObject && (activeObject.type === 'rect' || activeObject.type === 'ellipse')) {
+          activeObject.set('strokeWidth', value);
+          canvas.renderAll();
+          saveHistory();
+        }
+        shapeOptions.strokeWidth = value;
       });
 
       zoomRange?.addEventListener('input', () => {
@@ -2346,6 +2412,16 @@
         if (event.key === 'Escape' && mobileMenu?.classList.contains('show')) {
           mobileMenu.classList.remove('show');
         }
+        if (event.key === 'Escape' && shapeState.active) {
+          if (shapeState.preview) {
+            canvas.remove(shapeState.preview);
+            shapeState.preview = null;
+          }
+          shapeState.active = false;
+          shapeState.kind = null;
+          canvas.requestRenderAll();
+          showToast('已取消绘制');
+        }
 
         // 工具快捷键（仅在非输入状态且无修饰键时生效）
         if (!isInputing && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -2356,6 +2432,8 @@
           else if (lower === 'b') { setTool('brush'); }
           else if (lower === 'e') { setTool('eraser'); }
           else if (lower === 'h') { setTool('pan'); }
+          else if (lower === 'r') { setTool('rect'); }
+          else if (lower === 'o') { setTool('ellipse'); }
           else if (lower === 't') { openTextDialog(); }
           else if (lower === 'f') { toggleFullscreen(); }
           else if (k === ' ' || lower === ' ') { event.preventDefault(); setTool('pan'); }
@@ -2501,6 +2579,55 @@
           canvas.renderAll();
           return;
         }
+        // Shape drawing start
+        if (currentTool === 'rect' || currentTool === 'ellipse') {
+          const p0 = canvas.getPointer(e);
+          shapeState.active = true;
+          shapeState.kind = currentTool;
+          shapeState.start = { x: p0.x, y: p0.y };
+          if (shapeState.preview) {
+            canvas.remove(shapeState.preview);
+            shapeState.preview = null;
+          }
+          if (currentTool === 'rect') {
+            shapeState.preview = new fabric.Rect({
+              left: p0.x,
+              top: p0.y,
+              originX: 'center',
+              originY: 'center',
+              width: 1,
+              height: 1,
+              stroke: shapeOptions.stroke,
+              strokeWidth: shapeOptions.strokeWidth,
+              fill: shapeOptions.fillEnabled ? shapeOptions.fill : null,
+              strokeDashArray: shapeOptions.strokeDashArray || null,
+              selectable: false,
+              evented: false,
+              excludeFromExport: true,
+              opacity: 0.85
+            });
+          } else {
+            shapeState.preview = new fabric.Ellipse({
+              left: p0.x,
+              top: p0.y,
+              originX: 'center',
+              originY: 'center',
+              rx: 0.5,
+              ry: 0.5,
+              stroke: shapeOptions.stroke,
+              strokeWidth: shapeOptions.strokeWidth,
+              fill: shapeOptions.fillEnabled ? shapeOptions.fill : null,
+              strokeDashArray: shapeOptions.strokeDashArray || null,
+              selectable: false,
+              evented: false,
+              excludeFromExport: true,
+              opacity: 0.85
+            });
+          }
+          canvas.add(shapeState.preview);
+          canvas.requestRenderAll();
+          return;
+        }
         const isMiddleButton = e && e.button === 1;
         const allowPan = isMiddleButton || panMode;
         if (allowPan) {
@@ -2531,6 +2658,28 @@
             return;
           }
         }
+        if (shapeState.active && shapeState.preview) {
+          const p1 = canvas.getPointer(e);
+          const x0 = shapeState.start.x, y0 = shapeState.start.y;
+          let w = Math.abs(p1.x - x0);
+          let h = Math.abs(p1.y - y0);
+          if (e && e.shiftKey) {
+            const s = Math.min(w, h);
+            w = s; h = s;
+          }
+          const cx = (x0 + p1.x) / 2;
+          const cy = (y0 + p1.y) / 2;
+          if (shapeState.kind === 'rect') {
+            shapeState.preview.set({ left: cx, top: cy, width: Math.max(0.5, w), height: Math.max(0.5, h) });
+          } else if (shapeState.kind === 'ellipse') {
+            shapeState.preview.set({ left: cx, top: cy, rx: Math.max(0.25, w / 2), ry: Math.max(0.25, h / 2) });
+          }
+          if (snapEnabled) {
+            calculateSnap(shapeState.preview);
+          }
+          canvas.requestRenderAll();
+          return;
+        }
         if (!isDragging) return;
         const p = getClientPoint(e);
         const dx = p.x - dragStart.x;
@@ -2547,6 +2696,29 @@
       canvas.on('mouse:up', (opt) => {
         if (isPinching) {
           isPinching = false;
+        }
+        if (shapeState.active) {
+          const obj = shapeState.preview;
+          shapeState.active = false;
+          shapeState.kind = null;
+          if (obj) {
+            const zoom = canvas.getZoom() || 1;
+            const minDim = 3 / zoom;
+            const w = obj.getScaledWidth?.() || obj.width || 0;
+            const h = obj.getScaledHeight?.() || obj.height || 0;
+            if (Math.max(w, h) < minDim) {
+              canvas.remove(obj);
+              shapeState.preview = null;
+              canvas.requestRenderAll();
+            } else {
+              obj.set({ selectable: true, evented: true, excludeFromExport: false, opacity: 1 });
+              shapeState.preview = null;
+              canvas.setActiveObject(obj);
+              obj.setCoords();
+              canvas.requestRenderAll();
+              saveHistory();
+            }
+          }
         }
         if (isDragging) {
           isDragging = false;
@@ -2619,6 +2791,47 @@
       saveHistory();
       updateHistoryButtons();
       updateZoomInputs();
+
+      // Shape controls wiring
+      const fillEnabledEl = document.getElementById('fillEnabled');
+      const fillColorEl = document.getElementById('fillColor');
+      const dashPatternEl = document.getElementById('dashPattern');
+      if (fillEnabledEl && fillColorEl && dashPatternEl) {
+        fillEnabledEl.addEventListener('change', () => {
+          shapeOptions.fillEnabled = !!fillEnabledEl.checked;
+          const active = canvas.getActiveObject();
+          if (active && (active.type === 'rect' || active.type === 'ellipse')) {
+            active.set('fill', shapeOptions.fillEnabled ? (shapeOptions.fill || fillColorEl.value) : null);
+            canvas.requestRenderAll();
+            saveHistory();
+          }
+        });
+        fillColorEl.addEventListener('input', () => {
+          shapeOptions.fill = fillColorEl.value;
+          const active = canvas.getActiveObject();
+          if (active && (active.type === 'rect' || active.type === 'ellipse')) {
+            if (shapeOptions.fillEnabled) {
+              active.set('fill', fillColorEl.value);
+              canvas.requestRenderAll();
+              saveHistory();
+            }
+          }
+        });
+        function parseDash(v) {
+          if (!v) return null;
+          const arr = String(v).split(',').map(s => Math.max(0, parseFloat(s.trim()))).filter(n => isFinite(n) && n > 0);
+          return arr.length ? arr : null;
+        }
+        dashPatternEl.addEventListener('input', () => {
+          shapeOptions.strokeDashArray = parseDash(dashPatternEl.value);
+          const active = canvas.getActiveObject();
+          if (active && (active.type === 'rect' || active.type === 'ellipse')) {
+            active.set('strokeDashArray', shapeOptions.strokeDashArray || null);
+            canvas.requestRenderAll();
+            saveHistory();
+          }
+        });
+      }
     })();
   </script>
 </body>
