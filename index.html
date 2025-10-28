@@ -205,6 +205,17 @@
       box-shadow: none;
     }
 
+    /* 页面级全屏（不触发浏览器 Fullscreen API） */
+    .board-shell.is-page-fullscreen {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      border-radius: 0;
+      box-shadow: none;
+      z-index: 50;
+    }
+
     .board-toolbar {
       padding: 18px clamp(16px, 3vw, 32px) 16px;
       display: flex;
@@ -1282,7 +1293,7 @@
       function updateBoardStageHeight() {
         const boardToolbar = document.querySelector('.board-toolbar');
         const toolbarHeight = boardToolbar.offsetHeight;
-        const isFullscreen = Boolean(document.fullscreenElement);
+        const isFullscreen = Boolean(document.fullscreenElement) || boardShell.classList.contains('is-page-fullscreen');
         const minHeight = 320;
         
         if (isFullscreen) {
@@ -2072,12 +2083,48 @@
         mobileMenu?.classList.remove('show');
       }
 
-      function toggleFullscreen() {
+      // 全屏辅助方法
+      const isPageFullscreenActive = () => boardShell.classList.contains('is-page-fullscreen');
+
+      function updateFullscreenUI() {
+        const inBrowser = Boolean(document.fullscreenElement);
+        const inPage = isPageFullscreenActive();
+        // 仅在浏览器全屏时打上 is-fullscreen，供已有样式复用
+        boardShell.classList.toggle('is-fullscreen', inBrowser);
+        const fullscreenButton = document.querySelector('[data-action="fullscreen"]');
+        if (fullscreenButton) {
+          fullscreenButton.innerHTML = (inBrowser || inPage)
+            ? `<span class="btn-icon">✕</span><span class="btn-text">退出全屏</span>`
+            : `<span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span>`;
+        }
+        updateBoardStageHeight();
+        requestAnimationFrame(() => requestAnimationFrame(resizeCanvas));
+      }
+
+      function exitCurrentFullscreen() {
         if (document.fullscreenElement) {
           document.exitFullscreen();
-        } else {
-          boardShell.requestFullscreen?.();
+          return;
         }
+        if (isPageFullscreenActive()) {
+          boardShell.classList.remove('is-page-fullscreen');
+          updateFullscreenUI();
+        }
+      }
+
+      // 工具栏按钮：页面级全屏（再次点击或任一全屏下均退出当前全屏）
+      function togglePageFullscreen() {
+        if (document.fullscreenElement) { document.exitFullscreen(); return; }
+        if (isPageFullscreenActive()) { exitCurrentFullscreen(); return; }
+        boardShell.classList.add('is-page-fullscreen');
+        updateFullscreenUI();
+      }
+
+      // CTA/英雄区按钮：浏览器全屏（再次点击或任一全屏下均退出当前全屏）
+      function toggleBrowserFullscreen() {
+        if (document.fullscreenElement) { document.exitFullscreen(); return; }
+        if (isPageFullscreenActive()) { exitCurrentFullscreen(); return; }
+        boardShell.requestFullscreen?.();
       }
 
       function resetCanvas() {
@@ -2208,7 +2255,7 @@
       document.querySelector('[data-action="arrange"]').addEventListener('click', () => autoArrangeImages());
       document.querySelector('[data-action="export"]').addEventListener('click', () => exportCanvas());
       document.querySelector('[data-action="duplicate"]').addEventListener('click', () => duplicateObject());
-      document.querySelector('[data-action="fullscreen"]').addEventListener('click', () => toggleFullscreen());
+      document.querySelector('[data-action="fullscreen"]').addEventListener('click', () => togglePageFullscreen());
       document.querySelectorAll('[data-action="reset"]').forEach(btn => btn.addEventListener('click', () => resetCanvas()));
       document.querySelector('[data-action="fit-content"]').addEventListener('click', () => fitContentView());
       
@@ -2247,7 +2294,7 @@
       document.querySelector('[data-action="export-mobile"]')?.addEventListener('click', () => exportCanvas());
       document.querySelector('[data-action="duplicate-mobile"]')?.addEventListener('click', () => duplicateObject());
       document.querySelector('[data-action="delete-mobile"]')?.addEventListener('click', () => deleteActiveObjects());
-      document.querySelector('[data-action="fullscreen-mobile"]')?.addEventListener('click', () => toggleFullscreen());
+      document.querySelector('[data-action="fullscreen-mobile"]')?.addEventListener('click', () => togglePageFullscreen());
       document.querySelector('[data-action="reset-mobile"]')?.addEventListener('click', () => resetCanvas());
       document.querySelector('[data-action="fit-content-mobile"]')?.addEventListener('click', () => fitContentView());
       
@@ -2336,7 +2383,7 @@
         boardShell.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
 
-      heroFullscreenBtn?.addEventListener('click', () => toggleFullscreen());
+      heroFullscreenBtn?.addEventListener('click', () => toggleBrowserFullscreen());
 
       document.querySelector('[data-action="cancel-text"]').addEventListener('click', () => closeTextDialog());
       document.querySelector('[data-action="confirm-text"]').addEventListener('click', () => addTextToCanvas());
@@ -2496,6 +2543,9 @@
           canvas.requestRenderAll();
           showToast('已取消绘制');
         }
+        if (event.key === 'Escape') {
+          exitCurrentFullscreen();
+        }
 
         // 工具快捷键（仅在非输入状态且无修饰键时生效）
         if (!isInputing && !event.ctrlKey && !event.metaKey && !event.altKey) {
@@ -2510,7 +2560,10 @@
           else if (lower === 'r') { setTool('rect'); }
           else if (lower === 'o') { setTool('ellipse'); }
           else if (lower === 't') { openTextDialog(); }
-          else if (lower === 'f') { toggleFullscreen(); }
+          else if (lower === 'f') {
+            if (document.fullscreenElement || isPageFullscreenActive()) { exitCurrentFullscreen(); }
+            else { togglePageFullscreen(); }
+          }
           else if (k === ' ' || lower === ' ') { event.preventDefault(); setTool('pan'); }
         }
       });
@@ -2893,13 +2946,7 @@
       canvas.on('after:render', () => { drawRulers(); });
 
       document.addEventListener('fullscreenchange', () => {
-        const fullscreenButton = document.querySelector('[data-action="fullscreen"]');
-        const isFull = Boolean(document.fullscreenElement);
-        boardShell.classList.toggle('is-fullscreen', isFull);
-        if (fullscreenButton) {
-          fullscreenButton.innerHTML = isFull ? `<span class="btn-icon">✕</span><span class="btn-text">退出全屏</span>` : `<span class="btn-icon">⛶</span><span class="btn-text">全屏专注</span>`;
-        }
-        requestAnimationFrame(updateBoardStageHeight);
+        updateFullscreenUI();
       });
 
       // Initial overlay sizing
